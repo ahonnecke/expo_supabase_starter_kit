@@ -46,6 +46,7 @@ Base L2 and Polygon seem to be the leading contenders [see BLOCKCHAIN.md for det
   * Option A: Proceeds go to the LLC, then disbursed to seller after expenses
   * Option B: Seller receives upfront payment from platform; platform keeps token proceeds
   * Option C: Seller keeps some tokens and only partially liquidates
+  * Option D: Other?
 * @RentinityDev: Finalize which model fits our investor, legal, and cash flow needs
 
 ### 6. 💸 Offering Launch
@@ -84,9 +85,8 @@ Base L2 and Polygon seem to be the leading contenders [see BLOCKCHAIN.md for det
 ## 🔮 Tokenomics Strategy
 
 * Default: 100,000 tokens = 100% of a property
-* Token price likely fixed (e.g., \$50 or \$100 per token)
+* Token price fixed? (e.g., \$50 or \$100 per token)
 * Platform may:
-
   * Retain a portion as fee or carry
   * Mint more tokens if recapitalization needed
   * Lock team-held tokens with vesting schedule
@@ -163,10 +163,13 @@ Cons:
 
 Questions for @RentinityDev:
 
+* What happens in case of user account deletion or fraud?
+
+Questions for @ahonnecke:
+
 * Who controls the keys to user wallets?
 * Can users export keys or withdraw tokens?
 * Will wallets be whitelisted or KYC-gated?
-* What happens in case of user account deletion or fraud?
 * How do we handle gas for backend-signed transactions?
 
 Pros:
@@ -184,23 +187,22 @@ Cons:
 
 ## 🔢 Operational Questions (For Later Phases)
 
-Questions for @RentinityDev:
-
-* Hosting: AWS? Render? Vercel?
-* RPC: Alchemy, Infura, or QuickNode?
-* Will we self-host an indexer or use The Graph?
-* Do we need SOC2 or security audits for custodial infra?
-* Will we need automated 1099s or K1s for investors?
+[See OPS.md](https://github.com/ahonnecke/rentinity/blob/main/BLOCKCHAIN.md "ops")
 
 ---
 
 ## ✅ Immediate Next Steps
 
-1. [ ] Finalize jurisdiction + legal counsel for LLC formation (Wyoming confirmed)
-2. [ ] Choose off-chain MVP stack (e.g., Supabase + Stripe + React)
-3. [ ] Build smart contract PoC on Polygon Mumbai
-4. [ ] Create investor-facing dashboard for fake token balances
-5. [ ] Internal call to align on blockchain justification + phasing
+### @RentinityDev
+1. [ ] Finalize jurisdiction + legal counsel for LLC formation (Wyoming?)
+
+### @ahonnecke
+1. [ ] Choose off-chain MVP stack (e.g., Supabase + Stripe + React)
+1. [ ] Build smart contract PoC on Polygon Mumbai
+1. [ ] Create investor-facing dashboard for fake token balances
+
+### @all
+1. [ ] Internal call to align on blockchain justification + phasing
 
 ---
 
