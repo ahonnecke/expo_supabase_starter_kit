@@ -8,7 +8,7 @@ Build a real estate investment platform that enables fractional ownership in **N
 
 ## 🪙 Blockchain
 
-Base L2 and Polygon seem to be the leading contenders see BLOCKCHAIN.md for details
+Base L2 and Polygon seem to be the leading contenders [see BLOCKCHAIN.md for details](https://github.com/ahonnecke/rentinity/blob/main/BLOCKCHAIN.md "BLOCKCHAIN")
 
 ---
 
