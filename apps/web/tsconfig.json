@@ -1,0 +1,39 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@ui/*": [
+        "../../packages/ui/src/*"
+      ],
+      "@shared/*": [
+        "../../packages/shared/src/*"
+      ],
+      "@supaclient/*": [
+        "../../packages/supabase/src/*"
+      ]
+    },
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "incremental": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "app",
+    "next-env.d.ts",
+    "next.config.mjs",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

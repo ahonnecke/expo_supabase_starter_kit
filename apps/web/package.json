@@ -1,0 +1,31 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "echo 'Add biome/eslint later' && exit 0",
+    "test": "node -e \"process.exit(0)\""
+  },
+  "dependencies": {
+    "@supa/shared": "workspace:*",
+    "@supa/supabase": "workspace:*",
+    "@supa/ui": "workspace:*",
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "@tanstack/react-query": "^5.51.0",
+    "next": "14.2.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native-web": "^0.19.12",
+    "tamagui": "^1.110.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tamagui/next-plugin": "^1.132.20",
+    "@types/react": "19.1.10"
+  }
+}
