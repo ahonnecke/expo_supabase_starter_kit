@@ -14,7 +14,7 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      DEBUG: "next:*"       # <- enable all Next.js debug logs
+      DEBUG: "next:*" # <- enable all Next.js debug logs
       # Or be more specific:
       # DEBUG: "next:server*,next:router*"
 

@@ -97,9 +97,9 @@ Everything else from the original plan stays intact (Supabase, TypeScript, Zod, 
 5. **Add `/app/profile` feature**:
    - Query `profiles` by `auth.uid()`; render a form with Zod validation; update via Supabase.
 6. **CI (GitHub Actions)**:
-   - Add a job that runs: `pnpm install`, `pnpm typecheck`, `pnpm test`, `docker build -t supa-accelerator/web .`
+   - Add a job that runs: `pnpm install`, `pnpm typecheck`, `pnpm test`, `docker build -t rentinity/web .`
 7. **Registry (optional)**:
-   - Tag & push image (`supa-accelerator/web:<sha>`), then run it anywhere with `docker run -p 3000:3000 ...`.
+   - Tag & push image (`rentinity/web:<sha>`), then run it anywhere with `docker run -p 3000:3000 ...`.
 
 ---
 
