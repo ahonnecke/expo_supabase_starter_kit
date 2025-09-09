@@ -1,4 +1,21 @@
 services:
+  # Local Hardhat blockchain node for testing
+  hardhat-node:
+    build:
+      context: ./packages/contracts
+      dockerfile: Dockerfile.hardhat
+    ports:
+      - "8545:8545"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./packages/contracts:/app
+      - /app/node_modules
+    command: ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
+    restart: unless-stopped
+    networks:
+      - rentinity-network
+
   web:
     build:
       context: .
@@ -25,6 +42,17 @@ services:
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      # Blockchain variables
+      PRIVATE_KEY: ${PRIVATE_KEY}
+      NEXT_PUBLIC_PROPERTY_TOKEN_FACTORY_ADDRESS: ${NEXT_PUBLIC_PROPERTY_TOKEN_FACTORY_ADDRESS}
       # Other variables
       ENABLE_TELEMETRY: ${ENABLE_TELEMETRY:-false}
+    depends_on:
+      - hardhat-node
     restart: unless-stopped
+    networks:
+      - rentinity-network
+
+networks:
+  rentinity-network:
+    driver: bridge
