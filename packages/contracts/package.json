@@ -3,11 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "compile": "hardhat compile",
+    "build": "hardhat compile",
     "test": "hardhat test",
-    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "test:integration": "hardhat test test/integration.test.ts",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "test:coverage": "hardhat coverage",
+    "deploy:localhost": "hardhat run scripts/deploy.ts --network localhost",
     "deploy:mumbai": "hardhat run scripts/deploy.ts --network mumbai",
+    "verify:mumbai": "hardhat verify --network mumbai",
     "node": "hardhat node",
+    "node:fork": "hardhat node --fork https://rpc-mumbai.maticvigil.com",
+    "console:localhost": "hardhat console --network localhost",
+    "console:mumbai": "hardhat console --network mumbai",
     "typechain": "hardhat typechain"
   },
   "devDependencies": {

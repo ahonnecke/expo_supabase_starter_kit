@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Local Hardhat blockchain node for development/testing
+  hardhat-node:
+    build:
+      context: ./packages/contracts
+      dockerfile: Dockerfile.hardhat
+    ports:
+      - "8545:8545"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./packages/contracts:/app
+      - /app/node_modules
+    command: ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
+    networks:
+      - rentinity-dev
+
+  # Contract deployment service
+  contract-deployer:
+    build:
+      context: ./packages/contracts
+      dockerfile: Dockerfile.hardhat
+    environment:
+      - NODE_ENV=development
+      - HARDHAT_NETWORK=localhost
+    volumes:
+      - ./packages/contracts:/app
+      - /app/node_modules
+    depends_on:
+      - hardhat-node
+    command: ["sh", "-c", "sleep 10 && npx hardhat run scripts/deploy.ts --network localhost"]
+    networks:
+      - rentinity-dev
+
+  # PostgreSQL for local Supabase
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: rentinity_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - rentinity-dev
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - rentinity-dev
+
+volumes:
+  postgres_data:
+
+networks:
+  rentinity-dev:
+    driver: bridge
