@@ -127,6 +127,7 @@ dev.format:
 # Install blockchain dependencies
 blockchain.install:
 	@echo "Installing blockchain dependencies..."
+	pnpm install
 	cd packages/contracts && npm install
 	cd packages/blockchain && npm install
 

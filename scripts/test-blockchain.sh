@@ -44,30 +44,24 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
+if ! command -v pnpm &> /dev/null; then
+    print_error "pnpm is not installed. Please install it with: npm install -g pnpm"
+    exit 1
+fi
+
 print_status "Prerequisites check passed"
 
 # Setup environment
 echo "🔧 Setting up test environment..."
 
-# Copy environment file if it doesn't exist
 if [ ! -f .env ]; then
     cp .env.example .env
     print_warning "Created .env file from .env.example - please configure it"
 fi
 
-# Install dependencies
+# Install dependencies using pnpm (handles workspace protocol)
 echo "📦 Installing dependencies..."
-npm install
-
-# Install contract dependencies
-cd packages/contracts
-npm install
-cd ../..
-
-# Install blockchain package dependencies
-cd packages/blockchain
-npm install
-cd ../..
+pnpm install
 
 print_status "Dependencies installed"
 
