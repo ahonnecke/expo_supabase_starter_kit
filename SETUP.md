@@ -10,7 +10,7 @@ This repo is tuned for quick clones and Dockerized web deploys.
 - `packages/shared` — shared utils/types (Zod, TanStack Query ready)
 - `packages/supabase` — public/SSR/admin clients split
 - `supabase/` — migrations + (optional) Edge Functions skeleton
-- `docker-compose.yml` & `Dockerfile` — production-style multi-stage build for the **web** app
+- `docker compose.yml` & `Dockerfile` — production-style multi-stage build for the **web** app
 - `pnpm` workspaces + `turbo` pipeline
 
 > Note: The Tamagui Next plugin is **disabled** to keep Docker builds deterministic. You can re-enable later when needed.

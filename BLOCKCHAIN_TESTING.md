@@ -17,7 +17,7 @@ Start the local blockchain and services:
 
 ```bash
 # Start local Hardhat node and services
-docker-compose -f docker-compose.dev.yaml up -d
+docker compose -f docker-compose.dev.yaml up -d
 
 # Or run Hardhat node directly
 cd packages/contracts
@@ -235,10 +235,10 @@ npm run test:watch
 2. **API Logs:**
    ```bash
    # Check API logs
-   docker-compose logs web
+   docker compose logs web
    
    # Follow logs in real-time
-   docker-compose logs -f web
+   docker compose logs -f web
    ```
 
 3. **Database State:**
@@ -345,7 +345,7 @@ artillery run test/load-test.yml
 3. **Deploy Application:**
    ```bash
    # Build and deploy
-   docker-compose up -d
+   docker compose up -d
    
    # Verify deployment
    curl http://localhost:3000/api/health

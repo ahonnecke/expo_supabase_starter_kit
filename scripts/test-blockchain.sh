@@ -34,7 +34,7 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     print_error "Docker Compose is not installed"
     exit 1
 fi
@@ -75,10 +75,10 @@ print_status "Dependencies installed"
 echo "🐳 Starting test environment..."
 
 # Stop any existing containers
-docker-compose -f docker-compose.dev.yaml down
+docker compose -f docker-compose.dev.yaml down
 
 # Start fresh containers
-docker-compose -f docker-compose.dev.yaml up -d hardhat-node
+docker compose -f docker-compose.dev.yaml up -d hardhat-node
 
 # Wait for Hardhat node to be ready
 echo "⏳ Waiting for Hardhat node to start..."
@@ -87,7 +87,7 @@ sleep 10
 # Check if Hardhat node is running
 if ! curl -s http://localhost:8545 > /dev/null; then
     print_error "Hardhat node failed to start"
-    docker-compose -f docker-compose.dev.yaml logs hardhat-node
+    docker compose -f docker-compose.dev.yaml logs hardhat-node
     exit 1
 fi
 
@@ -172,12 +172,12 @@ cd ../..
 echo "🌐 Starting web application..."
 
 # Start the web service
-docker-compose -f docker-compose.dev.yaml up -d postgres
+docker compose -f docker-compose.dev.yaml up -d postgres
 sleep 5
 
 # Wait for postgres to be ready
 echo "⏳ Waiting for database..."
-until docker-compose -f docker-compose.dev.yaml exec postgres pg_isready -U postgres; do
+until docker compose -f docker-compose.dev.yaml exec postgres pg_isready -U postgres; do
     sleep 1
 done
 
@@ -222,7 +222,7 @@ print_warning "E2E tests not implemented yet - manual testing required"
 echo "🧹 Cleaning up..."
 
 # Stop all containers
-docker-compose -f docker-compose.dev.yaml down
+docker compose -f docker-compose.dev.yaml down
 
 print_status "Test environment cleaned up"
 
@@ -246,7 +246,7 @@ echo "4. Configure monitoring and alerts"
 
 echo ""
 echo "🔗 Useful commands:"
-echo "  Start local blockchain: docker-compose -f docker-compose.dev.yaml up hardhat-node"
+echo "  Start local blockchain: docker compose -f docker-compose.dev.yaml up hardhat-node"
 echo "  Deploy contracts: cd packages/contracts && npm run deploy:localhost"
 echo "  Run contract tests: cd packages/contracts && npm test"
 echo "  Start web app: cd apps/web && npm run dev"

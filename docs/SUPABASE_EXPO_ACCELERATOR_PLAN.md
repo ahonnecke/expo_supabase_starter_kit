@@ -8,7 +8,7 @@
 - **Web app builds & runs in Docker**  
   - `next.config.mjs` uses **no Tamagui Next plugin**; `output: 'standalone'`.  
   - **Route guard** lives under `/app` (middleware protecting `/app/:path*`).  
-  - `docker-compose.yml` runs `web` on port **3000**.  
+  - `docker compose.yml` runs `web` on port **3000**.  
 - **Tamagui** is present in packages but **not extracted** on web (plugin disabled to keep Docker build clean).
 
 > Rationale: We prioritized a deterministic Docker build. Tamagui’s Next plugin can be reintroduced later with a known-good setup, without blocking web deploy.
