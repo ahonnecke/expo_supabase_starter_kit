@@ -74,11 +74,11 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         if (transfersRestricted) {
             // Allow minting and burning operations
             if (from != address(0) && to != address(0)) {
-                // Check if lockup period has ended
-                require(block.timestamp >= lockupPeriodEnd, "PropertyToken: tokens are still in lockup period");
-                
-                // Check if both addresses are whitelisted
+                // Check if both addresses are whitelisted first
                 require(kycWhitelist[from] && kycWhitelist[to], "PropertyToken: addresses must be KYC whitelisted");
+                
+                // Then check if lockup period has ended
+                require(block.timestamp >= lockupPeriodEnd, "PropertyToken: tokens are still in lockup period");
             }
         }
         
