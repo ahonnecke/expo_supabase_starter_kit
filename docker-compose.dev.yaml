@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Local Hardhat blockchain node for development/testing
   hardhat-node:
@@ -30,7 +28,12 @@ services:
       - /app/node_modules
     depends_on:
       - hardhat-node
-    command: ["sh", "-c", "sleep 10 && npx hardhat run scripts/deploy.ts --network localhost"]
+    command:
+      [
+        "sh",
+        "-c",
+        "sleep 10 && npx hardhat run scripts/deploy.ts --network localhost",
+      ]
     networks:
       - rentinity-dev
 

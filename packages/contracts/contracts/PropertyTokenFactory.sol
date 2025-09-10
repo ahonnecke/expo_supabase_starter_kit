@@ -58,9 +58,9 @@ contract PropertyTokenFactory is Ownable {
         // Check if property ID already exists
         require(propertyIdToToken[propertyId] == address(0), "PropertyTokenFactory: property ID already exists");
         
-        // Create new property token
+        // Create new property token with factory as initial owner
         PropertyToken newToken = new PropertyToken(
-            owner(),
+            address(this),
             name,
             symbol,
             propertyAddress,
@@ -73,6 +73,9 @@ contract PropertyTokenFactory is Ownable {
         if (totalSupply > 0 && initialHolder != address(0)) {
             newToken.mint(initialHolder, totalSupply);
         }
+        
+        // Transfer ownership to the factory owner
+        newToken.transferOwnership(owner());
         
         // Store token address
         address tokenAddress = address(newToken);
