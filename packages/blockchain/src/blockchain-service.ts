@@ -108,7 +108,7 @@ export class BlockchainService {
     const event = receipt.logs.find((log: any) => {
       try {
         const parsed = factory.interface.parseLog(log);
-        return parsed.name === 'PropertyTokenCreated';
+        return parsed?.name === 'PropertyTokenCreated';
       } catch {
         return false;
       }
@@ -116,7 +116,7 @@ export class BlockchainService {
 
     if (event) {
       const parsed = factory.interface.parseLog(event);
-      return parsed.args.tokenAddress;
+      return parsed?.args.tokenAddress;
     }
 
     throw new Error('Failed to create property token');
