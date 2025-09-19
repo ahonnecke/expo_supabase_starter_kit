@@ -1,7 +1,7 @@
 // packages/supabase/src/server-only.ts
 // import 'server-only' // Uncomment in Next.js server contexts
 import { createClient } from '@supabase/supabase-js'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient as createSupabaseServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export function createAdminClient() {
@@ -18,7 +18,7 @@ export function createServerClient() {
   
   if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY')
   
-  return createServerClient(url, key, {
+  return createSupabaseServerClient(url, key, {
     cookies: {
       get(name: string) {
         return cookieStore.get(name)?.value
