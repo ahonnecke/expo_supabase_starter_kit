@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@supa/supabase/src/auth-context";
 import { ProtectedRoute } from "@supa/supabase/src/auth-middleware";
 import { createPublicClient } from "@supa/supabase/src/client";
-import { WalletProvider, useWallet } from "@rentinity/blockchain/src/wallet-context";
+import { WalletProvider, useWallet } from "@rentinity/blockchain";
 import WalletConnect from "../../components/WalletConnect";
+import TransferTokens from "../../components/TransferTokens";
 
 interface Investment {
   id: string;
@@ -35,6 +36,9 @@ function BlockchainContent() {
   const [error, setError] = useState<string | null>(null);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [mintingStates, setMintingStates] = useState<Record<string, boolean>>({});
+  const [tokenBalances, setTokenBalances] = useState<Record<string, string>>({});
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -82,6 +86,98 @@ function BlockchainContent() {
     
     fetchInvestments();
   }, [user]);
+
+  // Fetch token balances from blockchain when wallet is connected
+  useEffect(() => {
+    if (!isConnected || !address || investments.length === 0) return;
+    
+    const fetchTokenBalances = async () => {
+      try {
+        const balances: Record<string, string> = {};
+        
+        for (const investment of investments) {
+          if (investment.token_contract_address) {
+            try {
+              const balance = await blockchainService.getTokenBalance(
+                investment.token_contract_address,
+                address
+              );
+              
+              balances[investment.id] = blockchainService.formatTokenAmount(balance, 18);
+            } catch (err) {
+              console.error(`Error fetching balance for ${investment.id}:`, err);
+              balances[investment.id] = '0';
+            }
+          }
+        }
+        
+        setTokenBalances(balances);
+      } catch (err) {
+        console.error('Error fetching token balances:', err);
+      }
+    };
+    
+    fetchTokenBalances();
+  }, [isConnected, address, investments, blockchainService]);
+
+  const handleTransferComplete = () => {
+    // Refresh token balances and hide transfer form
+    setShowTransfer(false);
+    setSelectedInvestment(null);
+    
+    // Re-fetch investments to get updated state
+    if (user) {
+      fetchInvestments();
+    }
+  };
+
+  const fetchInvestments = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const supabase = createPublicClient();
+      
+      // Fetch user's investments with property details
+      const { data, error: fetchError } = await supabase
+        .from("ownership_ledger")
+        .select(`
+          id,
+          property_id,
+          shares_owned,
+          wallet_address,
+          metadata,
+          properties!inner(
+            address,
+            token_contract_address
+          )
+        `)
+        .eq("user_id", user.id);
+      
+      if (fetchError) throw fetchError;
+      
+      const formattedInvestments = data?.map(item => ({
+        id: item.id,
+        property_id: item.property_id,
+        property_address: item.properties.address,
+        shares_owned: item.shares_owned,
+        wallet_address: item.wallet_address,
+        token_contract_address: item.properties.token_contract_address,
+        metadata: item.metadata || {}
+      })) || [];
+      
+      setInvestments(formattedInvestments);
+    } catch (err: any) {
+      setError(err.message || "Failed to load investments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleShowTransfer = (investment: Investment) => {
+    setSelectedInvestment(investment);
+    setShowTransfer(true);
+  };
 
   const handleMintTokens = async (investment: Investment) => {
     if (!isConnected || !address) {
@@ -276,6 +372,7 @@ function BlockchainContent() {
                 <th style={styles.th}>Shares Owned</th>
                 <th style={styles.th}>Token Status</th>
                 <th style={styles.th}>Blockchain Status</th>
+                <th style={styles.th}>Token Balance</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
@@ -303,6 +400,13 @@ function BlockchainContent() {
                     )}
                   </td>
                   <td style={styles.td}>
+                    {isConnected && investment.token_contract_address ? (
+                      <span>{tokenBalances[investment.id] || '0'}</span>
+                    ) : (
+                      <span>-</span>
+                    )}
+                  </td>
+                  <td style={styles.td}>
                     {investment.token_contract_address && !isTokensMinted(investment) ? (
                       <button
                         onClick={() => handleMintTokens(investment)}
@@ -321,7 +425,20 @@ function BlockchainContent() {
                         {mintingStates[investment.id] ? "Minting..." : "Mint Tokens"}
                       </button>
                     ) : investment.token_contract_address && isTokensMinted(investment) ? (
-                      <span style={styles.mintedBadge}>✓ Minted</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <span style={styles.mintedBadge}>✓ Minted</span>
+                        <button
+                          onClick={() => handleShowTransfer(investment)}
+                          disabled={!isConnected || chainId !== 80001}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#4caf50',
+                            ...(!isConnected || chainId !== 80001 ? styles.disabledButton : {})
+                          }}
+                        >
+                          Transfer
+                        </button>
+                      </div>
                     ) : (
                       <span style={{ color: "#666", fontSize: 12 }}>
                         Token not available
@@ -334,6 +451,15 @@ function BlockchainContent() {
           </table>
         )}
       </div>
+      
+      {showTransfer && selectedInvestment && (
+        <TransferTokens
+          propertyId={selectedInvestment.property_id}
+          tokenAddress={selectedInvestment.token_contract_address}
+          walletAddress={selectedInvestment.wallet_address}
+          onTransferComplete={handleTransferComplete}
+        />
+      )}
     </div>
   );
 }

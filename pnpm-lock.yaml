@@ -90,6 +90,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.51.0
         version: 5.85.5(react@18.2.0)
+      ethers:
+        specifier: ^6.15.0
+        version: 6.15.0
       next:
         specifier: 14.2.5
         version: 14.2.5(@babel/core@7.28.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)

@@ -20,6 +20,12 @@
       ],
       "@supaclient/*": [
         "packages/supabase/src/*"
+      ],
+      "@rentinity/blockchain": [
+        "packages/blockchain/src"
+      ],
+      "@rentinity/blockchain/*": [
+        "packages/blockchain/src/*"
       ]
     }
   }
