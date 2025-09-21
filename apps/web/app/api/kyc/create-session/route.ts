@@ -6,8 +6,7 @@ import { KYCProviderFactory } from '@supa/shared/src/kyc';
 export async function POST(request: NextRequest) {
   try {
     // Initialize Supabase client
-    const cookieStore = cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createServerClient();
     
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();

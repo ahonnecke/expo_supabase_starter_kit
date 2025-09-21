@@ -16,6 +16,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/supabase/package.json packages/supabase/package.json
+COPY packages/blockchain/package.json packages/blockchain/package.json
 
 FROM base AS deps
 RUN pnpm install --frozen-lockfile
@@ -38,7 +39,19 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 # Bring source after deps to maximize cache
 COPY . .
 
-# Build only the web app (Next.js)
+# Build blockchain package first
+RUN pnpm --filter @rentinity/blockchain build
+
+# Create the node_modules structure for the blockchain package in the web app
+RUN mkdir -p /app/apps/web/node_modules/@rentinity/blockchain/dist
+
+# Copy the blockchain package's dist directory to the web app's node_modules
+RUN cp -r /app/packages/blockchain/dist/* /app/apps/web/node_modules/@rentinity/blockchain/dist/
+
+# Copy the package.json to the web app's node_modules
+RUN cp /app/packages/blockchain/package.json /app/apps/web/node_modules/@rentinity/blockchain/
+
+# Build the web app (Next.js)
 RUN pnpm --filter web build
 
 # ---------- Runner (small, prod-only) ----------

@@ -1,6 +1,6 @@
 "use client";
 
-import { useWallet } from "@rentinity/blockchain/src/wallet-context";
+import { useWallet } from "@rentinity/blockchain";
 
 export default function WalletConnect() {
   const {

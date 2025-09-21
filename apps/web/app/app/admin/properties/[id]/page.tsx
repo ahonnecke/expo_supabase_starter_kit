@@ -19,6 +19,7 @@ interface Property {
   status: string;
   created_at: string;
   metadata: any;
+  token_contract_address?: string;
 }
 
 export default function AdminPropertyReviewPage({ params }: { params: { id: string } }) {

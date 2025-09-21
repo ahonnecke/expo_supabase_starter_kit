@@ -6,7 +6,7 @@ export class StripeIdentityProvider implements KYCProvider {
   
   constructor(apiKey: string) {
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2023-10-16', // Use the latest Stripe API version
+      apiVersion: '2025-08-27.basil', // Use the expected Stripe API version
     });
   }
 
@@ -32,7 +32,7 @@ export class StripeIdentityProvider implements KYCProvider {
       return {
         clientSecret: session.client_secret as string,
         verificationId: session.id,
-        url: session.url,
+        url: session.url || undefined,
       };
     } catch (error) {
       console.error('Error creating Stripe Identity verification session:', error);

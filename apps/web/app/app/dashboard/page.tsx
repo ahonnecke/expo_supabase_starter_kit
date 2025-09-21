@@ -129,14 +129,14 @@ function DashboardContent() {
         if (dividendError) throw dividendError;
         
         // Format dividend data
-        const formattedDividends = dividendData?.map(dividend => {
+        const formattedDividends = dividendData?.map((dividend: any) => {
           const property = propertiesData?.find(p => p.id === dividend.property_id);
           return {
             id: dividend.id,
             property_id: dividend.property_id,
             property_address: property?.address || "Unknown Property",
             amount: dividend.amount,
-            payment_date: dividend.rent_payments?.payment_date,
+            payment_date: dividend.rent_payments ? dividend.rent_payments.payment_date : null,
             status: dividend.status
           };
         }) || [];

@@ -2,13 +2,12 @@ import { createServerClient } from '@supa/supabase/src/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { BlockchainService, NetworkType } from '@rentinity/blockchain/src';
+import { BlockchainService, NetworkType } from '@rentinity/blockchain';
 
 export async function POST(request: NextRequest) {
   try {
     // Initialize Supabase client
-    const cookieStore = cookies();
-    const supabase = createServerClient(cookieStore);
+    const supabase = createServerClient();
     
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();

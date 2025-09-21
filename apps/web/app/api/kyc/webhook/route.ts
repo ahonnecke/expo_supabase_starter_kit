@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Find the verification record by provider_reference_id
     const { data: existingVerification, error: fetchError } = await supabase
       .from('kyc_verifications')
-      .select('id, status, user_id')
+      .select('id, status, user_id, metadata')
       .eq('provider_reference_id', verification.provider_reference_id)
       .maybeSingle();
     
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       .update({
         status: verification.status,
         metadata: {
-          ...existingVerification.metadata,
+          ...(existingVerification.metadata || {}),
           provider_metadata: verification.metadata
         },
         updated_at: new Date().toISOString()

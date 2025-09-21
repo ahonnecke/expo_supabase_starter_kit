@@ -15,7 +15,8 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "gen:feature": "tsx tools/scripts/create-feature.ts",
-    "gen:types": "supabase gen types typescript --schema public > packages/shared/src/db.types.ts"
+    "gen:types": "supabase gen types typescript --schema public > packages/shared/src/db.types.ts",
+    "link:blockchain": "mkdir -p apps/web/node_modules/@rentinity/blockchain/dist && cp -r packages/blockchain/dist/* apps/web/node_modules/@rentinity/blockchain/dist/ && cp packages/blockchain/package.json apps/web/node_modules/@rentinity/blockchain/"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useWallet } from "@rentinity/blockchain";
 import { ethers } from "ethers";
 
@@ -16,7 +16,7 @@ export default function TransferTokens({
   tokenAddress,
   walletAddress,
   onTransferComplete,
-}: TransferTokensProps) {
+}: TransferTokensProps): React.ReactElement {
   const { isConnected, address, blockchainService } = useWallet();
   const [recipientAddress, setRecipientAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -68,18 +68,27 @@ export default function TransferTokens({
       }
 
       // Step 2: Execute the transfer using the user's wallet
-      const txHash = await blockchainService.transferTokens(
-        tokenAddress,
-        recipientAddress,
-        ethers.parseEther(amount)
-      );
+      try {
+        if (!blockchainService) {
+          setError("Blockchain service not initialized");
+          return;
+        }
+        
+        const txHash = await blockchainService.transferTokens(
+          tokenAddress,
+          recipientAddress,
+          ethers.parseEther(amount)
+        );
 
-      setSuccess(`Transfer successful! Transaction hash: ${txHash}`);
-      setRecipientAddress("");
-      setAmount("");
-      
-      if (onTransferComplete) {
-        onTransferComplete();
+        setSuccess(`Transfer successful! Transaction hash: ${txHash}`);
+        setRecipientAddress("");
+        setAmount("");
+        
+        if (onTransferComplete) {
+          onTransferComplete();
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to transfer tokens");
       }
     } catch (err: any) {
       setError(err.message || "Failed to transfer tokens");

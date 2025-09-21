@@ -66,7 +66,8 @@ function BlockchainContent() {
         
         if (fetchError) throw fetchError;
         
-        const formattedInvestments = data?.map(item => ({
+        // Add type assertion to fix TypeScript errors
+        const formattedInvestments = data?.map((item: any) => ({
           id: item.id,
           property_id: item.property_id,
           property_address: item.properties.address,
@@ -90,6 +91,7 @@ function BlockchainContent() {
   // Fetch token balances from blockchain when wallet is connected
   useEffect(() => {
     if (!isConnected || !address || investments.length === 0) return;
+    if (!blockchainService) return;
     
     const fetchTokenBalances = async () => {
       try {
@@ -156,7 +158,8 @@ function BlockchainContent() {
       
       if (fetchError) throw fetchError;
       
-      const formattedInvestments = data?.map(item => ({
+      // Add type assertion to fix TypeScript errors
+      const formattedInvestments = data?.map((item: any) => ({
         id: item.id,
         property_id: item.property_id,
         property_address: item.properties.address,
