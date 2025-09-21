@@ -67,7 +67,7 @@ export class StripeIdentityProvider implements KYCProvider {
         id: session.id,
         status,
         created_at: new Date(session.created * 1000).toISOString(),
-        updated_at: new Date(session.last_error?.created || session.created * 1000).toISOString(),
+        updated_at: new Date(session.created * 1000).toISOString(),
         provider: 'stripe',
         provider_reference_id: session.id,
         user_id: session.metadata?.user_id as string,
