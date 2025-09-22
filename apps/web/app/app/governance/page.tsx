@@ -74,15 +74,32 @@ function GovernanceContent() {
         
         if (fetchError) throw fetchError;
         
-        const uniqueProperties = data?.reduce((acc: any[], item) => {
-          if (!acc.some(p => p.id === item.properties.id)) {
-            acc.push({
-              id: item.properties.id,
-              address: item.properties.address
-            });
-          }
-          return acc;
-        }, []) || [];
+        // Extract properties from the data and ensure they're unique
+        const uniqueProperties: { id: string; address: string }[] = [];
+        
+        if (data && Array.isArray(data)) {
+          data.forEach(item => {
+            // Safely access nested properties with type checking
+            const properties = item.properties;
+            
+            if (properties && typeof properties === 'object') {
+              // Use type assertion after validation
+              const prop = properties as any;
+              
+              if (prop.id && prop.address) {
+                const propertyId = String(prop.id);
+                const propertyAddress = String(prop.address);
+                
+                if (!uniqueProperties.some(p => p.id === propertyId)) {
+                  uniqueProperties.push({
+                    id: propertyId,
+                    address: propertyAddress
+                  });
+                }
+              }
+            }
+          });
+        }
         
         setProperties(uniqueProperties);
       } catch (err: any) {
