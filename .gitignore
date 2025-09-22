@@ -21,3 +21,7 @@ htmlcov
 /.aider.chat.history.md
 /apps/web/tsconfig.tsbuildinfo
 /.turbo/
+/packages/contracts/cache/
+/packages/contracts/artifacts/
+/packages/contracts/typechain-types/
+/packages/contracts/deployments/
