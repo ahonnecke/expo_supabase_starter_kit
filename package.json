@@ -20,6 +20,7 @@
     "link:blockchain": "mkdir -p apps/web/node_modules/@rentinity/blockchain/dist && cp -r packages/blockchain/dist/* apps/web/node_modules/@rentinity/blockchain/dist/ && cp packages/blockchain/package.json apps/web/node_modules/@rentinity/blockchain/"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.55.0",
     "@types/node": "^20.10.0",
     "@types/react": "19.1.10",
     "@types/react-dom": "^19.1.7",
