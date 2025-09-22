@@ -2,7 +2,21 @@ import { createServerClient } from '@supa/supabase/src/server';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { BlockchainService, NetworkType } from '@rentinity/blockchain';
+import { 
+  BlockchainService, 
+  NetworkType
+} from '@rentinity/blockchain';
+
+// Temporary type definitions until the blockchain package is updated
+interface BlockchainTransactionResponse {
+  hash: string;
+  success: boolean;
+  error?: string;
+}
+
+interface KycStatusResponse extends BlockchainTransactionResponse {
+  invalidAddresses?: string[];
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +28,11 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { 
+          error: 'Authentication required', 
+          message: 'You must be logged in to mint tokens',
+          code: 'UNAUTHORIZED'
+        },
         { status: 401 }
       );
     }
@@ -24,7 +42,16 @@ export async function POST(request: NextRequest) {
     
     if (!propertyId || !walletAddress || !shares) {
       return NextResponse.json(
-        { error: 'Property ID, wallet address, and shares are required' },
+        { 
+          error: 'Missing required fields', 
+          message: 'Property ID, wallet address, and shares are required',
+          code: 'VALIDATION_ERROR',
+          fields: {
+            propertyId: !propertyId ? 'Property ID is required' : undefined,
+            walletAddress: !walletAddress ? 'Wallet address is required' : undefined,
+            shares: !shares ? 'Number of shares is required' : undefined
+          }
+        },
         { status: 400 }
       );
     }
@@ -42,7 +69,12 @@ export async function POST(request: NextRequest) {
     
     if (ownershipError || !ownership) {
       return NextResponse.json(
-        { error: 'No ownership found for this property' },
+        { 
+          error: 'Ownership record not found', 
+          message: 'You do not have ownership rights for this property',
+          code: 'NOT_FOUND',
+          propertyId
+        },
         { status: 404 }
       );
     }
@@ -51,7 +83,12 @@ export async function POST(request: NextRequest) {
     
     if (!property.token_contract_address) {
       return NextResponse.json(
-        { error: 'Property token not yet created on blockchain' },
+        { 
+          error: 'Token not available', 
+          message: 'This property does not have a token contract deployed yet',
+          code: 'CONTRACT_NOT_FOUND',
+          propertyId
+        },
         { status: 400 }
       );
     }
@@ -59,7 +96,27 @@ export async function POST(request: NextRequest) {
     // Verify the requested shares don't exceed ownership
     if (shares > ownership.shares_owned) {
       return NextResponse.json(
-        { error: 'Cannot mint more tokens than shares owned' },
+        { 
+          error: 'Insufficient shares', 
+          message: `Cannot mint more tokens than shares owned. You own ${ownership.shares_owned} shares.`,
+          code: 'INSUFFICIENT_SHARES',
+          available: ownership.shares_owned,
+          requested: shares
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Check if tokens were already minted
+    if (ownership.metadata?.tokens_minted) {
+      return NextResponse.json(
+        { 
+          error: 'Already minted', 
+          message: 'Tokens have already been minted for this investment',
+          code: 'ALREADY_MINTED',
+          mintedAmount: ownership.metadata.tokens_minted,
+          transactionHash: ownership.metadata.mint_transaction_hash
+        },
         { status: 400 }
       );
     }
@@ -76,11 +133,24 @@ export async function POST(request: NextRequest) {
     const tokenAmount = ethers.parseEther(shares.toString());
     
     // Mint tokens to user's wallet
-    const txHash = await blockchainService.mintTokens(
+    const mintResult = await blockchainService.mintTokens(
       property.token_contract_address,
       walletAddress,
       tokenAmount
-    );
+    ) as unknown as BlockchainTransactionResponse;
+    
+    if (!mintResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Minting failed', 
+          message: mintResult.error || 'Failed to mint tokens on the blockchain',
+          code: 'CONTRACT_ERROR'
+        },
+        { status: 500 }
+      );
+    }
+    
+    const txHash = mintResult.hash;
     
     // Update ownership record to track minted tokens
     const { error: updateError } = await supabase
@@ -101,14 +171,20 @@ export async function POST(request: NextRequest) {
     }
     
     // Set KYC status for the wallet address (assuming user is KYC verified)
+    let kycResult: KycStatusResponse = { success: true, hash: '' };
     try {
-      await blockchainService.setKycStatus(
+      kycResult = await blockchainService.setKycStatus(
         property.token_contract_address,
         walletAddress,
         true
-      );
-    } catch (kycError) {
-      console.error('Error setting KYC status:', kycError);
+      ) as unknown as KycStatusResponse;
+      
+      if (!kycResult.success) {
+        console.error('Error setting KYC status:', kycResult.error);
+        // Continue even if KYC setting fails
+      }
+    } catch (kycError: any) {
+      console.error('Exception setting KYC status:', kycError?.message || kycError);
       // Continue even if KYC setting fails
     }
     
@@ -117,13 +193,39 @@ export async function POST(request: NextRequest) {
       transactionHash: txHash,
       tokenAddress: property.token_contract_address,
       tokensMinted: shares,
-      walletAddress
+      walletAddress,
+      kycStatus: kycResult.success ? 'success' : 'warning',
+      explorerUrl: `${process.env.POLYGON_EXPLORER_URL || 'https://mumbai.polygonscan.com'}/tx/${txHash}`
     });
   } catch (error: any) {
     console.error('Error minting tokens:', error);
+    
+    // Determine error type and provide appropriate response
+    let statusCode = 500;
+    let errorCode = 'INTERNAL_ERROR';
+    let errorMessage = error.message || 'Internal server error';
+    
+    if (error.code === 'PGRST301') {
+      statusCode = 404;
+      errorCode = 'RECORD_NOT_FOUND';
+      errorMessage = 'The requested record was not found';
+    } else if (error.code === 'PGRST204') {
+      statusCode = 403;
+      errorCode = 'PERMISSION_DENIED';
+      errorMessage = 'You do not have permission to perform this action';
+    } else if (error.message && error.message.includes('network')) {
+      statusCode = 503;
+      errorCode = 'NETWORK_ERROR';
+      errorMessage = 'Blockchain network is currently unavailable';
+    }
+    
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        code: errorCode,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
+      { status: statusCode }
     );
   }
 }

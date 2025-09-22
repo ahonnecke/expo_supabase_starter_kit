@@ -216,7 +216,16 @@ function BlockchainContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to mint tokens");
+        // Enhanced error handling with more specific messages
+        if (data.code === 'UNAUTHORIZED') {
+          throw new Error('You do not have permission to mint tokens for this property');
+        } else if (data.code === 'ALREADY_MINTED') {
+          throw new Error('Tokens have already been minted for this investment');
+        } else if (data.code === 'CONTRACT_ERROR') {
+          throw new Error(`Smart contract error: ${data.error || 'Unknown contract error'}`);
+        } else {
+          throw new Error(data.error || "Failed to mint tokens");
+        }
       }
 
       // Update the investment in state
@@ -226,9 +235,51 @@ function BlockchainContent() {
           : inv
       ));
 
-      alert(`Successfully minted ${investment.shares_owned} tokens! Transaction: ${data.transactionHash}`);
+      // Show success message with transaction details and link
+      const txHash = data.transactionHash;
+      const explorerUrl = blockchainService?.getTransactionUrl(txHash) || 
+                         `https://mumbai.polygonscan.com/tx/${txHash}`;
+      
+      // Create a styled success message
+      const successElement = document.createElement('div');
+      successElement.innerHTML = `
+        <div style="padding: 16px; background-color: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 16px;">
+          <h4 style="margin-top: 0;">Transaction Successful!</h4>
+          <p>Successfully minted ${investment.shares_owned} tokens for property at ${investment.property_address}</p>
+          <p>Transaction Hash: <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer">${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}</a></p>
+        </div>
+      `;
+      
+      // Replace the alert with a more user-friendly notification
+      const container = document.querySelector('#blockchain-container');
+      if (container) {
+        container.prepend(successElement);
+        // Auto-remove after 10 seconds
+        setTimeout(() => successElement.remove(), 10000);
+      } else {
+        // Fallback to alert if container not found
+        alert(`Successfully minted ${investment.shares_owned} tokens! Transaction: ${txHash}`);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to mint tokens");
+      
+      // Show error in a more user-friendly way
+      const errorElement = document.createElement('div');
+      errorElement.innerHTML = `
+        <div style="padding: 16px; background-color: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 16px;">
+          <h4 style="margin-top: 0;">Transaction Failed</h4>
+          <p>${err.message || "Failed to mint tokens"}</p>
+          <button style="background: none; border: none; color: #721c24; text-decoration: underline; cursor: pointer; padding: 0;" 
+                  onclick="this.parentElement.remove()">
+            Dismiss
+          </button>
+        </div>
+      `;
+      
+      const container = document.querySelector('#blockchain-container');
+      if (container) {
+        container.prepend(errorElement);
+      }
     } finally {
       setMintingStates(prev => ({ ...prev, [investment.id]: false }));
     }
@@ -369,7 +420,7 @@ function BlockchainContent() {
   }
 
   return (
-    <div style={styles.container}>
+    <div id="blockchain-container" style={styles.container}>
       <div style={styles.header}>
         <h1>Blockchain Integration</h1>
         <div style={styles.navLinks}>

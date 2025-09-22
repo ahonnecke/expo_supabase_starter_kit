@@ -4,7 +4,9 @@ import {
   PropertyTokenMetadata, 
   CreatePropertyTokenParams, 
   TokenBalance, 
-  NetworkType 
+  NetworkType,
+  BlockchainTransactionResponse,
+  KycStatusResponse
 } from './types';
 import { getBlockchainConfig, getCurrentNetwork } from './config';
 
@@ -209,63 +211,235 @@ export class BlockchainService {
   }
 
   /**
-   * Transfer tokens
+   * Transfer tokens with enhanced error handling
    */
-  async transferTokens(tokenAddress: string, to: string, amount: bigint): Promise<string> {
+  async transferTokens(tokenAddress: string, to: string, amount: bigint): Promise<BlockchainTransactionResponse> {
     if (!this.signer) {
-      throw new Error('Wallet not connected');
+      return { hash: '', success: false, error: 'Wallet not connected. Please connect your wallet and try again.' };
     }
 
-    const token = this.getTokenContract(tokenAddress, true);
-    const tx = await token.transfer(to, amount);
-    const receipt = await tx.wait();
-    
-    return receipt.hash;
+    try {
+      const token = this.getTokenContract(tokenAddress, true);
+      
+      // Check if the user has enough balance
+      const signerAddress = await this.signer.getAddress();
+      const balance = await token.balanceOf(signerAddress);
+      
+      if (balance < amount) {
+        return { 
+          hash: '', 
+          success: false, 
+          error: `Insufficient balance. You have ${ethers.formatUnits(balance, 18)} tokens but are trying to transfer ${ethers.formatUnits(amount, 18)}.` 
+        };
+      }
+      
+      // Check if transfers are restricted
+      try {
+        const transfersRestricted = await token.transfersRestricted();
+        if (transfersRestricted) {
+          // Check if recipient is whitelisted
+          const isWhitelisted = await token.kycWhitelist(to);
+          if (!isWhitelisted) {
+            return { 
+              hash: '', 
+              success: false, 
+              error: 'Transfer failed: Recipient address is not whitelisted for this token.' 
+            };
+          }
+        }
+      } catch (err) {
+        // Some tokens might not have this function, so we'll continue if it fails
+        console.warn('Could not check transfer restrictions:', err);
+      }
+      
+      // Execute the transfer
+      const tx = await token.transfer(to, amount);
+      const receipt = await tx.wait();
+      
+      return { hash: receipt.hash, success: true };
+    } catch (err: any) {
+      // Handle specific error types
+      if (err.code === 'ACTION_REJECTED') {
+        return { hash: '', success: false, error: 'Transaction was rejected by the user.' };
+      } else if (err.code === 'INSUFFICIENT_FUNDS') {
+        return { hash: '', success: false, error: 'Insufficient ETH to pay for gas fees.' };
+      } else if (err.message && err.message.includes('execution reverted')) {
+        // Try to extract the revert reason if available
+        const revertReason = err.message.includes('reverted with reason string') 
+          ? err.message.split("'")[1] 
+          : 'Transaction reverted by the smart contract.';
+        return { hash: '', success: false, error: `Transaction failed: ${revertReason}` };
+      }
+      
+      // Generic error handling
+      return { 
+        hash: '', 
+        success: false, 
+        error: `Transaction failed: ${err.message || 'Unknown error occurred'}` 
+      };
+    }
   }
 
   /**
-   * Mint tokens (admin only)
+   * Mint tokens (admin only) with enhanced error handling
    */
-  async mintTokens(tokenAddress: string, to: string, amount: bigint): Promise<string> {
+  async mintTokens(tokenAddress: string, to: string, amount: bigint): Promise<BlockchainTransactionResponse> {
     if (!this.signer) {
-      throw new Error('Wallet not connected');
+      return { hash: '', success: false, error: 'Wallet not connected. Please connect your wallet and try again.' };
     }
 
-    const token = this.getTokenContract(tokenAddress, true);
-    const tx = await token.mint(to, amount);
-    const receipt = await tx.wait();
-    
-    return receipt.hash;
+    try {
+      const token = this.getTokenContract(tokenAddress, true);
+      
+      // Check if the address is valid
+      if (!ethers.isAddress(to)) {
+        return { hash: '', success: false, error: 'Invalid recipient address.' };
+      }
+      
+      // Check if amount is valid
+      if (amount <= 0n) {
+        return { hash: '', success: false, error: 'Amount must be greater than zero.' };
+      }
+      
+      // Execute the mint transaction
+      const tx = await token.mint(to, amount);
+      const receipt = await tx.wait();
+      
+      return { hash: receipt.hash, success: true };
+    } catch (err: any) {
+      // Handle specific error types
+      if (err.code === 'ACTION_REJECTED') {
+        return { hash: '', success: false, error: 'Transaction was rejected by the user.' };
+      } else if (err.code === 'INSUFFICIENT_FUNDS') {
+        return { hash: '', success: false, error: 'Insufficient ETH to pay for gas fees.' };
+      } else if (err.message && err.message.includes('execution reverted')) {
+        // Try to extract the revert reason if available
+        const revertReason = err.message.includes('reverted with reason string') 
+          ? err.message.split("'")[1] 
+          : 'Transaction reverted by the smart contract.';
+          
+        // Check for common revert reasons
+        if (revertReason.includes('Ownable: caller is not the owner')) {
+          return { hash: '', success: false, error: 'Minting failed: You do not have admin rights to mint tokens.' };
+        }
+        
+        return { hash: '', success: false, error: `Minting failed: ${revertReason}` };
+      }
+      
+      // Generic error handling
+      return { 
+        hash: '', 
+        success: false, 
+        error: `Minting failed: ${err.message || 'Unknown error occurred'}` 
+      };
+    }
   }
 
   /**
-   * Set KYC status for an address
+   * Set KYC status for an address with enhanced error handling
    */
-  async setKycStatus(tokenAddress: string, userAddress: string, isWhitelisted: boolean): Promise<string> {
+  async setKycStatus(tokenAddress: string, userAddress: string, isWhitelisted: boolean): Promise<KycStatusResponse> {
     if (!this.signer) {
-      throw new Error('Wallet not connected');
+      return { hash: '', success: false, error: 'Wallet not connected. Please connect your wallet and try again.' };
     }
 
-    const token = this.getTokenContract(tokenAddress, true);
-    const tx = await token.setKycStatus(userAddress, isWhitelisted);
-    const receipt = await tx.wait();
-    
-    return receipt.hash;
+    try {
+      // Validate address
+      if (!ethers.isAddress(userAddress)) {
+        return { hash: '', success: false, error: 'Invalid user address.' };
+      }
+      
+      const token = this.getTokenContract(tokenAddress, true);
+      const tx = await token.setKycStatus(userAddress, isWhitelisted);
+      const receipt = await tx.wait();
+      
+      return { hash: receipt.hash, success: true };
+    } catch (err: any) {
+      // Handle specific error types
+      if (err.code === 'ACTION_REJECTED') {
+        return { hash: '', success: false, error: 'Transaction was rejected by the user.' };
+      } else if (err.code === 'INSUFFICIENT_FUNDS') {
+        return { hash: '', success: false, error: 'Insufficient ETH to pay for gas fees.' };
+      } else if (err.message && err.message.includes('execution reverted')) {
+        // Try to extract the revert reason if available
+        const revertReason = err.message.includes('reverted with reason string') 
+          ? err.message.split("'")[1] 
+          : 'Transaction reverted by the smart contract.';
+          
+        // Check for common revert reasons
+        if (revertReason.includes('Ownable: caller is not the owner')) {
+          return { hash: '', success: false, error: 'KYC update failed: You do not have admin rights to update KYC status.' };
+        }
+        
+        return { hash: '', success: false, error: `KYC update failed: ${revertReason}` };
+      }
+      
+      // Generic error handling
+      return { 
+        hash: '', 
+        success: false, 
+        error: `KYC update failed: ${err.message || 'Unknown error occurred'}` 
+      };
+    }
   }
 
   /**
-   * Batch set KYC status for multiple addresses
+   * Batch set KYC status for multiple addresses with enhanced error handling
    */
-  async batchSetKycStatus(tokenAddress: string, addresses: string[], isWhitelisted: boolean): Promise<string> {
+  async batchSetKycStatus(tokenAddress: string, addresses: string[], isWhitelisted: boolean): Promise<KycStatusResponse> {
     if (!this.signer) {
-      throw new Error('Wallet not connected');
+      return { hash: '', success: false, error: 'Wallet not connected. Please connect your wallet and try again.' };
     }
 
-    const token = this.getTokenContract(tokenAddress, true);
-    const tx = await token.batchSetKycStatus(addresses, isWhitelisted);
-    const receipt = await tx.wait();
-    
-    return receipt.hash;
+    try {
+      // Validate addresses
+      const invalidAddresses = addresses.filter(addr => !ethers.isAddress(addr));
+      if (invalidAddresses.length > 0) {
+        return { 
+          hash: '', 
+          success: false, 
+          error: `Invalid addresses detected: ${invalidAddresses.length} addresses are invalid.`,
+          invalidAddresses
+        };
+      }
+      
+      // Check if the array is empty
+      if (addresses.length === 0) {
+        return { hash: '', success: false, error: 'No addresses provided for KYC update.' };
+      }
+      
+      const token = this.getTokenContract(tokenAddress, true);
+      const tx = await token.batchSetKycStatus(addresses, isWhitelisted);
+      const receipt = await tx.wait();
+      
+      return { hash: receipt.hash, success: true };
+    } catch (err: any) {
+      // Handle specific error types
+      if (err.code === 'ACTION_REJECTED') {
+        return { hash: '', success: false, error: 'Transaction was rejected by the user.' };
+      } else if (err.code === 'INSUFFICIENT_FUNDS') {
+        return { hash: '', success: false, error: 'Insufficient ETH to pay for gas fees.' };
+      } else if (err.message && err.message.includes('execution reverted')) {
+        // Try to extract the revert reason if available
+        const revertReason = err.message.includes('reverted with reason string') 
+          ? err.message.split("'")[1] 
+          : 'Transaction reverted by the smart contract.';
+          
+        // Check for common revert reasons
+        if (revertReason.includes('Ownable: caller is not the owner')) {
+          return { hash: '', success: false, error: 'Batch KYC update failed: You do not have admin rights to update KYC status.' };
+        }
+        
+        return { hash: '', success: false, error: `Batch KYC update failed: ${revertReason}` };
+      }
+      
+      // Generic error handling
+      return { 
+        hash: '', 
+        success: false, 
+        error: `Batch KYC update failed: ${err.message || 'Unknown error occurred'}` 
+      };
+    }
   }
 
   /**

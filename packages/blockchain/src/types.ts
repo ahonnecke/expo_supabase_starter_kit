@@ -45,3 +45,19 @@ export enum NetworkType {
   TESTNET = 'testnet',
   MAINNET = 'mainnet'
 }
+
+/**
+ * Response type for blockchain transactions
+ */
+export interface BlockchainTransactionResponse {
+  hash: string;
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Response type for KYC status operations
+ */
+export interface KycStatusResponse extends BlockchainTransactionResponse {
+  invalidAddresses?: string[];
+}
