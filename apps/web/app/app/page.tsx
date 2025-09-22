@@ -1,4 +1,20 @@
 // apps/web/app/(protected)/page.tsx
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function ProtectedPage() {
-  return <main><h1>Protected (web)</h1></main>
+  const router = useRouter();
+  
+  useEffect(() => {
+    // Redirect to dashboard
+    router.push("/app/dashboard");
+  }, [router]);
+
+  return (
+    <main style={{ padding: '2rem', textAlign: 'center' }}>
+      <h1>Redirecting to Dashboard...</h1>
+    </main>
+  );
 }

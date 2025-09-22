@@ -373,10 +373,66 @@ function BlockchainContent() {
       <div style={styles.header}>
         <h1>Blockchain Integration</h1>
         <div style={styles.navLinks}>
+          <Link href="/app/dashboard" style={styles.navLink}>
+            Dashboard
+          </Link>
           <Link href="/app/wallet-onboarding" style={styles.navLink}>
             Wallet Onboarding
           </Link>
           <Link href="/app/governance" style={styles.navLink}>
+            Governance
+          </Link>
+        </div>
+      </div>
+      
+      {/* Navigation Menu */}
+      <div style={{ 
+        marginBottom: 24, 
+        padding: 16, 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: 8,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      }}>
+        <h3 style={{ marginBottom: 12, fontSize: 16 }}>Quick Navigation</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <Link href="/app/dashboard" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#0070f3', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Dashboard
+          </Link>
+          <Link href="/app/properties" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#34a853', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Properties
+          </Link>
+          <Link href="/app/wallet-onboarding" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#673ab7', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Wallet Onboarding
+          </Link>
+          <Link href="/app/governance" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#ff9800', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
             Governance
           </Link>
         </div>

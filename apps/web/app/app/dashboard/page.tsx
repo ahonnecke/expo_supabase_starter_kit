@@ -46,6 +46,7 @@ function DashboardContent() {
   const [totalInvested, setTotalInvested] = useState(0);
   const [totalDividends, setTotalDividends] = useState(0);
   const [monthlyYield, setMonthlyYield] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   useEffect(() => {
     if (!user) return;
@@ -54,6 +55,17 @@ function DashboardContent() {
       try {
         setLoading(true);
         const supabase = createPublicClient();
+        
+        // Check if user is admin
+        const { data: profile, error: profileError } = await supabase
+          .from("user_profiles")
+          .select("preferences")
+          .eq("id", user.id)
+          .single();
+        
+        if (!profileError && profile?.preferences?.isAdmin === true) {
+          setIsAdmin(true);
+        }
         
         // Fetch user's investments (ownership records)
         const { data: ownershipData, error: ownershipError } = await supabase
@@ -291,10 +303,137 @@ function DashboardContent() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1>Investment Dashboard</h1>
-        <Link href="/app/properties" style={styles.button}>
-          Browse Properties
-        </Link>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link href="/app/properties" style={styles.button}>
+            Browse Properties
+          </Link>
+          <Link href="/app/blockchain" style={{ ...styles.button, backgroundColor: '#9c27b0' }}>
+            Blockchain
+          </Link>
+          <Link href="/app/governance" style={{ ...styles.button, backgroundColor: '#ff9800' }}>
+            Governance
+          </Link>
+        </div>
       </div>
+      
+      {/* Navigation Menu */}
+      <div style={{ 
+        marginBottom: 24, 
+        padding: 16, 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: 8,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      }}>
+        <h3 style={{ marginBottom: 12, fontSize: 16 }}>Quick Navigation</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <Link href="/app/properties" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#0070f3', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Properties
+          </Link>
+          <Link href="/app/blockchain" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#9c27b0', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Blockchain
+          </Link>
+          <Link href="/app/wallet-onboarding" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#673ab7', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Wallet Onboarding
+          </Link>
+          <Link href="/app/governance" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#ff9800', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Governance
+          </Link>
+          <Link href="/app/governance/create" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#ff5722', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Create Proposal
+          </Link>
+          <Link href="/app/profile" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#4caf50', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            My Profile
+          </Link>
+        </div>
+      </div>
+      
+      {/* Admin Features - Only visible to admin users */}
+      {isAdmin && (
+        <div style={{ 
+          marginBottom: 24, 
+          padding: 16, 
+          backgroundColor: '#fff3e0', 
+          borderRadius: 8,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          border: '1px solid #ffcc80'
+        }}>
+          <h3 style={{ marginBottom: 12, fontSize: 16, color: '#e65100' }}>Admin Features</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            <Link href="/app/admin/properties" style={{ 
+              padding: '8px 12px', 
+              backgroundColor: '#e65100', 
+              color: 'white', 
+              borderRadius: 4, 
+              fontSize: 14,
+              textDecoration: 'none'
+            }}>
+              Property Management
+            </Link>
+            <Link href="/app/admin/blockchain/batch-mint" style={{ 
+              padding: '8px 12px', 
+              backgroundColor: '#e65100', 
+              color: 'white', 
+              borderRadius: 4, 
+              fontSize: 14,
+              textDecoration: 'none'
+            }}>
+              Batch Mint Tokens
+            </Link>
+            <Link href="/app/admin/rent" style={{ 
+              padding: '8px 12px', 
+              backgroundColor: '#e65100', 
+              color: 'white', 
+              borderRadius: 4, 
+              fontSize: 14,
+              textDecoration: 'none'
+            }}>
+              Rent Management
+            </Link>
+          </div>
+        </div>
+      )}
       
       {error && <p style={{ color: "crimson" }}>{error}</p>}
       
@@ -400,6 +539,72 @@ function DashboardContent() {
             </tbody>
           </table>
         )}
+      </div>
+      
+      {/* Feature Summary Section */}
+      <div style={{
+        marginTop: 32,
+        padding: 24,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      }}>
+        <h2 style={{
+          fontSize: 20,
+          fontWeight: 'bold',
+          marginBottom: 16,
+          color: '#333',
+          borderBottom: '2px solid #0070f3',
+          paddingBottom: '0.5rem',
+          display: 'inline-block'
+        }}>Platform Features</h2>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: 16,
+          marginTop: 16
+        }}>
+          <div style={{
+            padding: 16,
+            backgroundColor: 'white',
+            borderRadius: 8,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#0070f3' }}>Property Investment</h3>
+            <p style={{ fontSize: 14, color: '#666' }}>Browse and invest in fractional real estate properties with transparent yield information.</p>
+          </div>
+          
+          <div style={{
+            padding: 16,
+            backgroundColor: 'white',
+            borderRadius: 8,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#9c27b0' }}>Blockchain Integration</h3>
+            <p style={{ fontSize: 14, color: '#666' }}>Connect your wallet and manage property tokens on the Polygon Mumbai testnet.</p>
+          </div>
+          
+          <div style={{
+            padding: 16,
+            backgroundColor: 'white',
+            borderRadius: 8,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#ff9800' }}>Governance</h3>
+            <p style={{ fontSize: 14, color: '#666' }}>Create and vote on property proposals with weighted voting based on token ownership.</p>
+          </div>
+          
+          <div style={{
+            padding: 16,
+            backgroundColor: 'white',
+            borderRadius: 8,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#4caf50' }}>Lockup Periods</h3>
+            <p style={{ fontSize: 14, color: '#666' }}>Tokens can be locked for a specified period, preventing transfers until the lockup expires.</p>
+          </div>
+        </div>
       </div>
     </div>
   );
