@@ -47,13 +47,24 @@ function PropertiesContent() {
         const { data: profile, error: profileError } = await supabase
           .from("user_profiles")
           .select("preferences")
-          .eq("id", user.id)
-          .single();
+          .eq("id", user.id);
         
-        if (profileError) throw profileError;
+        // Don't throw error if profile doesn't exist, just set admin to false
+        const userIsAdmin = profile && profile.length > 0 && profile[0]?.preferences?.isAdmin === true;
+        setIsAdmin(!!userIsAdmin); // Convert to boolean
         
-        const userIsAdmin = profile?.preferences?.isAdmin === true;
-        setIsAdmin(userIsAdmin);
+        // If no profile exists, create one
+        if (!profile || profile.length === 0) {
+          try {
+            await supabase.from("user_profiles").insert({
+              id: user.id,
+              preferences: { isAdmin: false }
+            });
+          } catch (insertErr) {
+            console.error("Error creating user profile:", insertErr);
+            // Don't throw here, we can continue without a profile
+          }
+        }
         
         // Fetch properties
         let query = supabase
@@ -213,11 +224,57 @@ function PropertiesContent() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1>Properties</h1>
-        {isAdmin && (
+        <div style={{ display: 'flex', gap: '12px' }}>
           <Link href="/app/properties/submit" style={styles.button}>
             Submit New Property
           </Link>
-        )}
+          <Link href="/app/dashboard" style={{ ...styles.button, backgroundColor: '#4caf50' }}>
+            Dashboard
+          </Link>
+        </div>
+      </div>
+      
+      {/* Navigation Menu */}
+      <div style={{ 
+        marginBottom: 24, 
+        padding: 16, 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: 8,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      }}>
+        <h3 style={{ marginBottom: 12, fontSize: 16 }}>Quick Navigation</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <Link href="/app/dashboard" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#0070f3', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Dashboard
+          </Link>
+          <Link href="/app/blockchain" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#9c27b0', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Blockchain
+          </Link>
+          <Link href="/app/governance" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#ff9800', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Governance
+          </Link>
+        </div>
       </div>
       
       {error && <p style={{ color: "crimson" }}>{error}</p>}

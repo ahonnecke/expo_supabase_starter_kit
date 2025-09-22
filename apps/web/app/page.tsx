@@ -134,6 +134,20 @@ export default function HomePage() {
       <div style={styles.header}>
         <h1 style={styles.title}>Welcome to Rentinity</h1>
         <p style={styles.subtitle}>A blockchain-powered real estate investment platform</p>
+        <Link href="/app/dashboard" style={{
+          display: 'inline-block',
+          marginTop: '1rem',
+          padding: '0.75rem 1.5rem',
+          backgroundColor: '#0070f3',
+          color: 'white',
+          borderRadius: '6px',
+          textDecoration: 'none',
+          fontWeight: 'bold',
+          fontSize: '1.1rem',
+          boxShadow: '0 4px 14px rgba(0, 118, 255, 0.39)'
+        }}>
+          Go to Dashboard
+        </Link>
       </div>
       
       <div style={styles.section}>

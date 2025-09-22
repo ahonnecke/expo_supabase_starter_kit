@@ -328,13 +328,23 @@ function DashboardContent() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           <Link href="/app/properties" style={{ 
             padding: '8px 12px', 
-            backgroundColor: '#0070f3', 
+            backgroundColor: '#34a853', 
             color: 'white', 
             borderRadius: 4, 
             fontSize: 14,
             textDecoration: 'none'
           }}>
             Properties
+          </Link>
+          <Link href="/app/properties/submit" style={{ 
+            padding: '8px 12px', 
+            backgroundColor: '#4caf50', 
+            color: 'white', 
+            borderRadius: 4, 
+            fontSize: 14,
+            textDecoration: 'none'
+          }}>
+            Submit Property
           </Link>
           <Link href="/app/blockchain" style={{ 
             padding: '8px 12px', 
@@ -410,6 +420,16 @@ function DashboardContent() {
               textDecoration: 'none'
             }}>
               Property Management
+            </Link>
+            <Link href="/app/properties/submit" style={{ 
+              padding: '8px 12px', 
+              backgroundColor: '#e65100', 
+              color: 'white', 
+              borderRadius: 4, 
+              fontSize: 14,
+              textDecoration: 'none'
+            }}>
+              Submit New Property
             </Link>
             <Link href="/app/admin/blockchain/batch-mint" style={{ 
               padding: '8px 12px', 
