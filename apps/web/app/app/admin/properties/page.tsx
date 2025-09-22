@@ -146,6 +146,10 @@ function AdminPropertiesContent() {
       alignItems: "center",
       marginBottom: 24,
     },
+    headerButtons: {
+      display: "flex",
+      gap: 16,
+    },
     filters: {
       display: "flex",
       gap: 16,
@@ -188,6 +192,10 @@ function AdminPropertiesContent() {
       backgroundColor: "#0070f3",
       color: "white",
     },
+    mintButton: {
+      backgroundColor: "#4caf50",
+      color: "white",
+    },
     emptyState: {
       textAlign: "center" as "center",
       padding: "40px 0",
@@ -219,9 +227,14 @@ function AdminPropertiesContent() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1>Admin: Property Management</h1>
-        <Link href="/app/properties" style={{ ...styles.actionButton, ...styles.reviewButton }}>
-          View Public Listings
-        </Link>
+        <div style={styles.headerButtons}>
+          <Link href="/app/admin/blockchain/batch-mint" style={{ ...styles.actionButton, ...styles.mintButton }}>
+            Batch Mint Tokens
+          </Link>
+          <Link href="/app/properties" style={{ ...styles.actionButton, ...styles.reviewButton }}>
+            View Public Listings
+          </Link>
+        </div>
       </div>
       
       <div style={styles.filters}>

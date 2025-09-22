@@ -20,6 +20,7 @@ interface Property {
   created_at: string;
   metadata: any;
   token_contract_address?: string;
+  lockup_end_date?: string | null;
 }
 
 export default function AdminPropertyReviewPage({ params }: { params: { id: string } }) {
@@ -48,6 +49,7 @@ function AdminPropertyReviewContent({ id }: { id: string }) {
   const [annualYield, setAnnualYield] = useState("");
   const [totalShares, setTotalShares] = useState("");
   const [status, setStatus] = useState("");
+  const [lockupEndDate, setLockupEndDate] = useState<string>("");
   
   useEffect(() => {
     if (!user || !id) return;
@@ -95,6 +97,7 @@ function AdminPropertyReviewContent({ id }: { id: string }) {
         setAnnualYield(propertyData.annual_yield_percent.toString());
         setTotalShares(propertyData.total_shares.toString());
         setStatus(propertyData.status);
+        setLockupEndDate(propertyData.lockup_end_date || '');
       } catch (err: any) {
         setError(err.message || "Failed to load property details");
       } finally {
@@ -155,6 +158,7 @@ function AdminPropertyReviewContent({ id }: { id: string }) {
           annual_yield_percent: annualYieldValue,
           total_shares: totalSharesValue,
           status,
+          lockup_end_date: lockupEndDate || null,
           metadata: {
             ...property.metadata,
             last_updated_by: user.id,
@@ -493,8 +497,19 @@ function AdminPropertyReviewContent({ id }: { id: string }) {
             <option value="pending">Pending</option>
             <option value="active">Active</option>
             <option value="rejected">Rejected</option>
-            <option value="sold">Sold</option>
           </select>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label htmlFor="lockupEndDate" style={styles.label}>Lockup End Date</label>
+          <input
+            id="lockupEndDate"
+            type="date"
+            value={lockupEndDate}
+            onChange={(e) => setLockupEndDate(e.target.value)}
+            style={styles.input}
+          />
+          <p style={{fontSize: 12, color: '#666', marginTop: 4}}>If set, tokens cannot be transferred until after this date.</p>
         </div>
         
         <div style={styles.buttonGroup}>

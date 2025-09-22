@@ -8,6 +8,7 @@ import { createPublicClient } from "@supa/supabase/src/client";
 import { WalletProvider, useWallet } from "@rentinity/blockchain";
 import WalletConnect from "../../components/WalletConnect";
 import TransferTokens from "../../components/TransferTokens";
+import Link from "next/link";
 
 interface Investment {
   id: string;
@@ -16,7 +17,9 @@ interface Investment {
   shares_owned: number;
   wallet_address: string | null;
   token_contract_address: string | null;
-  metadata: any;
+  lockup_end_date?: string | null;
+  onChainBalance?: string;
+  metadata?: any;
 }
 
 export default function BlockchainPage() {
@@ -56,6 +59,7 @@ function BlockchainContent() {
             property_id,
             shares_owned,
             wallet_address,
+            lockup_end_date,
             metadata,
             properties!inner(
               address,
@@ -74,6 +78,7 @@ function BlockchainContent() {
           shares_owned: item.shares_owned,
           wallet_address: item.wallet_address,
           token_contract_address: item.properties.token_contract_address,
+          lockup_end_date: item.lockup_end_date,
           metadata: item.metadata || {}
         })) || [];
         
@@ -123,10 +128,9 @@ function BlockchainContent() {
   }, [isConnected, address, investments, blockchainService]);
 
   const handleTransferComplete = () => {
-    // Refresh token balances and hide transfer form
+    // Refresh token balances 
     setShowTransfer(false);
     setSelectedInvestment(null);
-    
     // Re-fetch investments to get updated state
     if (user) {
       fetchInvestments();
@@ -238,6 +242,13 @@ function BlockchainContent() {
     return getTokensMinted(investment) > 0;
   };
 
+  const isLocked = (investment: Investment): boolean => {
+    if (!investment.lockup_end_date) return false;
+    const lockupEndDate = new Date(investment.lockup_end_date);
+    const currentDate = new Date();
+    return currentDate < lockupEndDate;
+  };
+
   const styles = {
     container: {
       padding: 24,
@@ -249,6 +260,18 @@ function BlockchainContent() {
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 24,
+    },
+    navLinks: {
+      display: "flex",
+      gap: 16,
+    },
+    navLink: {
+      color: "#0070f3",
+      textDecoration: "none",
+      fontSize: 14,
+      padding: "8px 16px",
+      borderRadius: 4,
+      border: "1px solid #0070f3",
     },
     walletSection: {
       border: "1px solid #ddd",
@@ -320,6 +343,20 @@ function BlockchainContent() {
       padding: 16,
       marginBottom: 24,
     },
+    lockupBadge: {
+      backgroundColor: "#ff9800",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: 4,
+      fontSize: 12,
+    },
+    unlockBadge: {
+      backgroundColor: "#4caf50",
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: 4,
+      fontSize: 12,
+    },
   };
 
   if (loading) {
@@ -335,6 +372,14 @@ function BlockchainContent() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1>Blockchain Integration</h1>
+        <div style={styles.navLinks}>
+          <Link href="/app/wallet-onboarding" style={styles.navLink}>
+            Wallet Onboarding
+          </Link>
+          <Link href="/app/governance" style={styles.navLink}>
+            Governance
+          </Link>
+        </div>
       </div>
 
       <div style={styles.infoBox}>
@@ -376,6 +421,7 @@ function BlockchainContent() {
                 <th style={styles.th}>Token Status</th>
                 <th style={styles.th}>Blockchain Status</th>
                 <th style={styles.th}>Token Balance</th>
+                <th style={styles.th}>Lockup Period</th>
                 <th style={styles.th}>Actions</th>
               </tr>
             </thead>
@@ -410,6 +456,17 @@ function BlockchainContent() {
                     )}
                   </td>
                   <td style={styles.td}>
+                    {investment.lockup_end_date ? (
+                      <span style={isLocked(investment) ? styles.lockupBadge : styles.unlockBadge}>
+                        {isLocked(investment) ? 
+                          `Locked until ${new Date(investment.lockup_end_date).toLocaleDateString()}` : 
+                          'Unlocked'}
+                      </span>
+                    ) : (
+                      <span>No lockup</span>
+                    )}
+                  </td>
+                  <td style={styles.td}>
                     {investment.token_contract_address && !isTokensMinted(investment) ? (
                       <button
                         onClick={() => handleMintTokens(investment)}
@@ -432,12 +489,13 @@ function BlockchainContent() {
                         <span style={styles.mintedBadge}>✓ Minted</span>
                         <button
                           onClick={() => handleShowTransfer(investment)}
-                          disabled={!isConnected || chainId !== 80001}
+                          disabled={!isConnected || chainId !== 80001 || isLocked(investment)}
                           style={{
                             ...styles.button,
                             backgroundColor: '#4caf50',
-                            ...(!isConnected || chainId !== 80001 ? styles.disabledButton : {})
+                            ...(!isConnected || chainId !== 80001 || isLocked(investment) ? styles.disabledButton : {})
                           }}
+                          title={isLocked(investment) ? `Tokens locked until ${new Date(investment.lockup_end_date!).toLocaleDateString()}` : ''}
                         >
                           Transfer
                         </button>

@@ -22,6 +22,7 @@ export default function TransferTokens({
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lockupEndDate, setLockupEndDate] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleTransfer = async (e: React.FormEvent) => {
@@ -64,7 +65,13 @@ export default function TransferTokens({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to prepare transfer");
+        // Check if the error is related to lockup period
+        if (data.lockupEndDate) {
+          setLockupEndDate(data.lockupEndDate);
+          throw new Error(`Tokens are in lockup period until ${new Date(data.lockupEndDate).toLocaleDateString()}`);
+        } else {
+          throw new Error(data.error || "Failed to prepare transfer");
+        }
       }
 
       // Step 2: Execute the transfer using the user's wallet
@@ -149,9 +156,16 @@ export default function TransferTokens({
       marginTop: 8,
     },
     success: {
-      color: "green",
-      fontSize: 14,
+      color: "#4caf50",
       marginTop: 8,
+    },
+    lockupWarning: {
+      backgroundColor: "#fff3cd",
+      color: "#856404",
+      padding: 8,
+      borderRadius: 4,
+      marginTop: 8,
+      marginBottom: 8,
     },
   };
 
@@ -214,7 +228,14 @@ export default function TransferTokens({
         </button>
       </form>
       
-      {error && <p style={styles.error}>{error}</p>}
+      {error && (
+        <div style={styles.error}>{error}</div>
+      )}
+      {lockupEndDate && (
+        <div style={styles.lockupWarning}>
+          <span style={{fontWeight: 'bold'}}>⚠️ Lockup Period:</span> Tokens are locked until {new Date(lockupEndDate).toLocaleDateString()}
+        </div>
+      )}
       {success && <p style={styles.success}>{success}</p>}
     </div>
   );
