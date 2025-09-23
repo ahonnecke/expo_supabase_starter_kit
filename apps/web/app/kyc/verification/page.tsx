@@ -23,6 +23,18 @@ function KYCVerificationContent() {
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
+  const [mockKycEnabled, setMockKycEnabled] = useState<boolean>(false);
+  
+  // Check if mock KYC is enabled
+  useEffect(() => {
+    // Check for environment variable
+    const isMockEnabled = 
+      typeof window !== 'undefined' && 
+      (window.process?.env?.NEXT_PUBLIC_MOCK_KYC === 'true' || 
+       process.env.NEXT_PUBLIC_MOCK_KYC === 'true');
+    
+    setMockKycEnabled(isMockEnabled);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -111,6 +123,61 @@ function KYCVerificationContent() {
       }
     } catch (err: any) {
       setError(err.message || "Failed to check verification status");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // For testing: Bypass KYC verification when mock KYC is enabled
+  const handleBypassKyc = async () => {
+    if (!mockKycEnabled || !user) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Create a mock verification record directly in the database
+      const supabase = createPublicClient();
+      
+      // First check if there's already a verification
+      const { data: existingVerification } = await supabase
+        .from("kyc_verifications")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("status", "verified")
+        .maybeSingle();
+      
+      if (existingVerification) {
+        setVerificationStatus("verified");
+      } else {
+        // Create a new mock verification
+        const { data: verification, error: insertError } = await supabase
+          .from("kyc_verifications")
+          .insert({
+            user_id: user.id,
+            status: "verified",
+            provider: "mock",
+            provider_reference_id: `mock_${user.id}_${Date.now()}`,
+            metadata: { mock: true, bypassed: true }
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          throw new Error("Failed to create mock verification");
+        }
+        
+        // Update user profile
+        await supabase
+          .from("user_profiles")
+          .update({ kyc_verified: true })
+          .eq("id", user.id);
+        
+        setVerificationStatus("verified");
+        console.log("KYC verification bypassed successfully");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to bypass KYC verification");
     } finally {
       setLoading(false);
     }
@@ -230,6 +297,29 @@ function KYCVerificationContent() {
             >
               Check Status
             </button>
+            
+            {/* Testing only: Show bypass button when mock KYC is enabled */}
+            {mockKycEnabled && (
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed #ccc' }}>
+                <p style={{ color: '#d32f2f', fontWeight: 'bold' }}>
+                  ⚠️ TESTING MODE ENABLED
+                </p>
+                <p style={{ color: '#d32f2f' }}>
+                  The following button will bypass KYC verification for testing purposes.
+                  This should NOT be used in production.
+                </p>
+                <button 
+                  style={{ 
+                    ...styles.button, 
+                    backgroundColor: '#d32f2f',
+                    marginTop: 8
+                  }} 
+                  onClick={handleBypassKyc}
+                >
+                  Bypass KYC Verification (Testing Only)
+                </button>
+              </div>
+            )}
           </>
         )}
         

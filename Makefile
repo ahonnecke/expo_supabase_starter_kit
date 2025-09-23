@@ -198,6 +198,10 @@ blockchain.verify:
 # ===== DOCKER COMMANDS (ENHANCED) =====
 
 # Start development environment with blockchain
+docker.rebuild:
+	@echo "Starting full rebuild..."
+	docker compose down && docker compose build && docker compose up
+
 docker.dev:
 	@echo "Starting development environment with blockchain..."
 	docker compose -f docker-compose.dev.yaml up -d

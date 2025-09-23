@@ -37,6 +37,8 @@ services:
       # Environment variables from .env file
       NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      # Testing variables
+      NEXT_PUBLIC_MOCK_KYC: ${NEXT_PUBLIC_MOCK_KYC:-false}
       # Server-side variables
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}

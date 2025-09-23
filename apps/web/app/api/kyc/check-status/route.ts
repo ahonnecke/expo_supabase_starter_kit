@@ -17,83 +17,83 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    console.log('⚠️ POC MODE: Always returning verified KYC status for testing');
     
-    // Get the latest verification record for the user
-    const { data: verification, error: fetchError } = await supabase
+    // Check if the user already has a verification record
+    const { data: existingVerification } = await supabase
       .from('kyc_verifications')
-      .select('*')
+      .select('id')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
       .maybeSingle();
     
-    if (fetchError) {
-      console.error('Error fetching verification record:', fetchError);
-      return NextResponse.json(
-        { error: 'Failed to fetch verification status' },
-        { status: 500 }
-      );
-    }
+    let verificationId;
+    let createdAt = new Date().toISOString();
+    let updatedAt = new Date().toISOString();
     
-    if (!verification) {
-      return NextResponse.json(
-        { error: 'No verification found' },
-        { status: 404 }
-      );
-    }
-    
-    // If the verification is still pending, check the latest status from the provider
-    if (verification.status === 'pending') {
-      try {
-        // Create KYC provider
-        const kycProvider = KYCProviderFactory.createProvider({
-          provider: verification.provider,
-          apiKey: process.env.STRIPE_SECRET_KEY || '',
-        });
-        
-        // Get the latest status from the provider
-        const updatedVerification = await kycProvider.getVerificationStatus(
-          verification.provider_reference_id
-        );
-        
-        // Update the verification record in the database if status has changed
-        if (updatedVerification.status !== verification.status) {
-          const { error: updateError } = await supabase
-            .from('kyc_verifications')
-            .update({
-              status: updatedVerification.status,
-              metadata: {
-                ...verification.metadata,
-                provider_metadata: updatedVerification.metadata
-              }
-            })
-            .eq('id', verification.id);
-          
-          if (updateError) {
-            console.error('Error updating verification record:', updateError);
+    // If no verification exists, create one
+    if (!existingVerification) {
+      // Create a mock verification record
+      const { data: newVerification, error: insertError } = await supabase
+        .from('kyc_verifications')
+        .insert({
+          user_id: user.id,
+          status: 'verified', // Always verified for POC
+          provider: 'mock',
+          provider_reference_id: `mock_${user.id}_${Date.now()}`,
+          metadata: { 
+            mock: true, 
+            poc: true,
+            note: 'Auto-verified for POC testing' 
           }
-          
-          // If verified, update the user profile
-          if (updatedVerification.status === 'verified') {
-            await supabase
-              .from('user_profiles')
-              .update({ kyc_verified: true })
-              .eq('id', user.id);
+        })
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('Error creating mock verification:', insertError);
+        // Continue anyway - we want this to always succeed
+      } else if (newVerification) {
+        verificationId = newVerification.id;
+        createdAt = newVerification.created_at;
+        updatedAt = newVerification.updated_at;
+      }
+    } else {
+      verificationId = existingVerification.id;
+      
+      // Update the verification to be verified if it's not already
+      const { error: updateError } = await supabase
+        .from('kyc_verifications')
+        .update({
+          status: 'verified',
+          metadata: {
+            mock: true,
+            poc: true,
+            note: 'Auto-verified for POC testing',
+            updated: new Date().toISOString()
           }
-          
-          verification.status = updatedVerification.status;
-        }
-      } catch (error) {
-        console.error('Error checking verification status with provider:', error);
-        // Continue with the existing status if there's an error
+        })
+        .eq('id', verificationId);
+      
+      if (updateError) {
+        console.error('Error updating verification record:', updateError);
       }
     }
     
+    // Always update the user profile to be KYC verified
+    await supabase
+      .from('user_profiles')
+      .update({ kyc_verified: true })
+      .eq('id', user.id);
+
+    // Always return a verified status
     return NextResponse.json({
-      id: verification.id,
-      status: verification.status,
-      created_at: verification.created_at,
-      updated_at: verification.updated_at
+      id: verificationId || `mock_${user.id}_${Date.now()}`,
+      status: 'verified', // Always verified for POC
+      created_at: createdAt,
+      updated_at: updatedAt,
+      mock: true,
+      poc: true
     });
   } catch (error) {
     console.error('Error checking verification status:', error);

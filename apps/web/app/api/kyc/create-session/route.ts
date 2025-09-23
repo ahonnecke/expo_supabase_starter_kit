@@ -18,38 +18,39 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create KYC provider
-    const kycProvider = KYCProviderFactory.createProvider({
-      provider: 'stripe',
-      apiKey: process.env.STRIPE_SECRET_KEY || '',
-    });
+    // POC MODE: Always return a successful mock response
+    console.log('⚠️ USING MOCK KYC RESPONSE - For POC testing only');
     
-    // Create verification session
-    const { clientSecret, verificationId, url } = await kycProvider.createVerificationSession(user.id);
+    // Generate mock values
+    const mockVerificationId = `mock_${user.id}_${Date.now()}`;
+    const mockClientSecret = `mock_secret_${Date.now()}`;
+    const mockUrl = '/api/kyc/mock-verification';
     
-    // Store verification record in database
-    const { error: insertError } = await supabase
-      .from('kyc_verifications')
-      .insert({
-        user_id: user.id,
-        status: 'pending',
-        provider: 'stripe',
-        provider_reference_id: verificationId,
-        metadata: { client_secret: clientSecret }
-      });
-    
-    if (insertError) {
-      console.error('Error storing verification record:', insertError);
-      return NextResponse.json(
-        { error: 'Failed to create verification session' },
-        { status: 500 }
-      );
+    // Store a mock verification record in database
+    try {
+      await supabase
+        .from('kyc_verifications')
+        .insert({
+          user_id: user.id,
+          status: 'pending',
+          provider: 'mock',
+          provider_reference_id: mockVerificationId,
+          metadata: { 
+            client_secret: mockClientSecret,
+            mock: true,
+            note: 'This is a mock verification for POC testing'
+          }
+        });
+    } catch (insertError) {
+      // Log error but continue anyway - we want this endpoint to always succeed
+      console.error('Error storing mock verification record:', insertError);
     }
     
+    // Always return a successful response
     return NextResponse.json({
-      clientSecret,
-      verificationId,
-      url
+      clientSecret: mockClientSecret,
+      verificationId: mockVerificationId,
+      url: mockUrl
     });
   } catch (error) {
     console.error('Error creating verification session:', error);
