@@ -1,63 +1,63 @@
 export interface PropertyTokenMetadata {
-  propertyAddress: string;
-  propertyValue: bigint;
-  annualYieldPercent: number;
-  lockupPeriodEnd: Date;
-  transfersRestricted: boolean;
+	propertyAddress: string;
+	propertyValue: bigint;
+	annualYieldPercent: number;
+	lockupPeriodEnd: Date;
+	transfersRestricted: boolean;
 }
 
 export interface PropertyToken {
-  address: string;
-  name: string;
-  symbol: string;
-  totalSupply: bigint;
-  decimals: number;
-  metadata: PropertyTokenMetadata;
+	address: string;
+	name: string;
+	symbol: string;
+	totalSupply: bigint;
+	decimals: number;
+	metadata: PropertyTokenMetadata;
 }
 
 export interface CreatePropertyTokenParams {
-  propertyId: string;
-  name: string;
-  symbol: string;
-  propertyAddress: string;
-  propertyValue: bigint;
-  annualYieldPercent: number;
-  lockupPeriodDays: number;
-  totalSupply: bigint;
-  initialHolder: string;
+	propertyId: string;
+	name: string;
+	symbol: string;
+	propertyAddress: string;
+	propertyValue: bigint;
+	annualYieldPercent: number;
+	lockupPeriodDays: number;
+	totalSupply: bigint;
+	initialHolder: string;
 }
 
 export interface TokenBalance {
-  token: PropertyToken;
-  balance: bigint;
-  formattedBalance: string;
+	token: PropertyToken;
+	balance: bigint;
+	formattedBalance: string;
 }
 
 export interface BlockchainConfig {
-  chainId: number;
-  rpcUrl: string;
-  propertyTokenFactoryAddress: string;
-  explorerUrl: string;
+	chainId: number;
+	rpcUrl: string;
+	propertyTokenFactoryAddress: string;
+	explorerUrl: string;
 }
 
 export enum NetworkType {
-  LOCALHOST = 'localhost',
-  TESTNET = 'testnet',
-  MAINNET = 'mainnet'
+	LOCALHOST = "localhost",
+	TESTNET = "testnet",
+	MAINNET = "mainnet",
 }
 
 /**
  * Response type for blockchain transactions
  */
 export interface BlockchainTransactionResponse {
-  hash: string;
-  success: boolean;
-  error?: string;
+	hash: string;
+	success: boolean;
+	error?: string;
 }
 
 /**
  * Response type for KYC status operations
  */
 export interface KycStatusResponse extends BlockchainTransactionResponse {
-  invalidAddresses?: string[];
+	invalidAddresses?: string[];
 }

@@ -16,18 +16,18 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     uint256 public propertyValue;
     uint256 public annualYieldPercent;
     uint256 public lockupPeriodEnd;
-    
+
     // Transfer restriction flag
     bool public transfersRestricted = true;
-    
+
     // KYC whitelist for transfer restrictions
     mapping(address => bool) public kycWhitelist;
-    
+
     // Events
     event KycStatusChanged(address indexed account, bool isWhitelisted);
     event TransferRestrictionsChanged(bool restricted);
     event PropertyMetadataUpdated(string propertyAddress, uint256 propertyValue, uint256 annualYieldPercent);
-    
+
     /**
      * @dev Constructor to create a new property token
      * @param initialOwner The address that will own and control this contract
@@ -46,7 +46,7 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         uint256 _propertyValue,
         uint256 _annualYieldPercent,
         uint256 _lockupPeriodDays
-    ) 
+    )
         ERC20(name, symbol)
         Ownable(initialOwner)
         ERC20Permit(name)
@@ -56,7 +56,7 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         annualYieldPercent = _annualYieldPercent;
         lockupPeriodEnd = block.timestamp + (_lockupPeriodDays * 1 days);
     }
-    
+
     /**
      * @dev Mint new tokens to an address (only owner can call)
      * @param to The address that will receive the minted tokens
@@ -65,7 +65,7 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
-    
+
     /**
      * @dev Override transfer function to enforce restrictions
      */
@@ -76,15 +76,15 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
             if (from != address(0) && to != address(0)) {
                 // Check if both addresses are whitelisted first
                 require(kycWhitelist[from] && kycWhitelist[to], "PropertyToken: addresses must be KYC whitelisted");
-                
+
                 // Then check if lockup period has ended
                 require(block.timestamp >= lockupPeriodEnd, "PropertyToken: tokens are still in lockup period");
             }
         }
-        
+
         super._update(from, to, value);
     }
-    
+
     /**
      * @dev Add or remove an address from the KYC whitelist
      * @param account The address to update
@@ -94,7 +94,7 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         kycWhitelist[account] = isWhitelisted;
         emit KycStatusChanged(account, isWhitelisted);
     }
-    
+
     /**
      * @dev Batch update KYC whitelist status for multiple addresses
      * @param accounts Array of addresses to update
@@ -106,7 +106,7 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
             emit KycStatusChanged(accounts[i], isWhitelisted);
         }
     }
-    
+
     /**
      * @dev Enable or disable transfer restrictions
      * @param restricted Whether transfers should be restricted
@@ -115,7 +115,7 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         transfersRestricted = restricted;
         emit TransferRestrictionsChanged(restricted);
     }
-    
+
     /**
      * @dev Update property metadata
      * @param _propertyAddress The physical address of the property
@@ -130,10 +130,10 @@ contract PropertyToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
         propertyAddress = _propertyAddress;
         propertyValue = _propertyValue;
         annualYieldPercent = _annualYieldPercent;
-        
+
         emit PropertyMetadataUpdated(_propertyAddress, _propertyValue, _annualYieldPercent);
     }
-    
+
     /**
      * @dev Extend the lockup period
      * @param _additionalDays The number of additional days to lock tokens

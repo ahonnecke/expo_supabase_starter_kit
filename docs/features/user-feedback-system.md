@@ -130,39 +130,39 @@ type FeedbackFormData = z.infer<typeof feedbackSchema>;
 export function FeedbackForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
     defaultValues: {
       type: 'general',
     },
   });
-  
+
   const onSubmit = async (data: FeedbackFormData) => {
     setIsSubmitting(true);
-    
+
     try {
       const supabase = createPublicClient();
-      
+
       // Get browser and system info
       const metadata = {
         userAgent: navigator.userAgent,
         screenSize: `${window.screen.width}x${window.screen.height}`,
         url: window.location.href,
       };
-      
+
       const { error } = await supabase
         .from('feedback')
         .insert({
           ...data,
           metadata,
         });
-      
+
       if (error) throw error;
-      
+
       setIsSuccess(true);
       reset();
-      
+
       // Reset success message after 5 seconds
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (error) {
@@ -171,17 +171,17 @@ export function FeedbackForm() {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className="feedback-form">
       <h2>Submit Feedback</h2>
-      
+
       {isSuccess && (
         <div className="success-message">
           Thank you for your feedback! We'll review it shortly.
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-group">
           <label htmlFor="type">Feedback Type</label>
@@ -192,7 +192,7 @@ export function FeedbackForm() {
           </select>
           {errors.type && <p className="error">{errors.type.message}</p>}
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="title">Title</label>
           <input
@@ -203,7 +203,7 @@ export function FeedbackForm() {
           />
           {errors.title && <p className="error">{errors.title.message}</p>}
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="description">Description</label>
           <textarea
@@ -214,7 +214,7 @@ export function FeedbackForm() {
           />
           {errors.description && <p className="error">{errors.description.message}</p>}
         </div>
-        
+
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
         </button>
@@ -241,14 +241,14 @@ export function FeedbackList() {
     status: 'all',
     sort: 'newest',
   });
-  
+
   useEffect(() => {
     async function loadFeedback() {
       setIsLoading(true);
-      
+
       try {
         const supabase = createPublicClient();
-        
+
         let query = supabase
           .from('feedback')
           .select(`
@@ -257,16 +257,16 @@ export function FeedbackList() {
             votes:feedback_votes(count),
             comments:feedback_comments(count)
           `);
-        
+
         // Apply filters
         if (filter.type !== 'all') {
           query = query.eq('type', filter.type);
         }
-        
+
         if (filter.status !== 'all') {
           query = query.eq('status', filter.status);
         }
-        
+
         // Apply sorting
         if (filter.sort === 'newest') {
           query = query.order('created_at', { ascending: false });
@@ -275,11 +275,11 @@ export function FeedbackList() {
         } else if (filter.sort === 'most_votes') {
           query = query.order('votes.count', { ascending: false });
         }
-        
+
         const { data, error } = await query;
-        
+
         if (error) throw error;
-        
+
         setFeedback(data || []);
       } catch (error) {
         console.error('Error loading feedback:', error);
@@ -287,21 +287,21 @@ export function FeedbackList() {
         setIsLoading(false);
       }
     }
-    
+
     loadFeedback();
   }, [filter]);
-  
+
   const handleFilterChange = (key, value) => {
     setFilter(prev => ({
       ...prev,
       [key]: value,
     }));
   };
-  
+
   if (isLoading) {
     return <div>Loading feedback...</div>;
   }
-  
+
   return (
     <div className="feedback-list">
       <div className="filters">
@@ -317,7 +317,7 @@ export function FeedbackList() {
             <option value="general">General Feedback</option>
           </select>
         </div>
-        
+
         <div className="filter-group">
           <label>Status:</label>
           <select
@@ -333,7 +333,7 @@ export function FeedbackList() {
             <option value="declined">Declined</option>
           </select>
         </div>
-        
+
         <div className="filter-group">
           <label>Sort:</label>
           <select
@@ -346,7 +346,7 @@ export function FeedbackList() {
           </select>
         </div>
       </div>
-      
+
       {feedback.length === 0 ? (
         <p>No feedback found matching your filters.</p>
       ) : (
@@ -372,7 +372,7 @@ import { CommentSection } from './components/CommentSection';
 export default async function FeedbackDetailPage({ params }) {
   const { id } = params;
   const supabase = createSSRClient();
-  
+
   // Get feedback details
   const { data: feedback, error } = await supabase
     .from('feedback')
@@ -384,11 +384,11 @@ export default async function FeedbackDetailPage({ params }) {
     `)
     .eq('id', id)
     .single();
-  
+
   if (error || !feedback) {
     notFound();
   }
-  
+
   return (
     <div className="feedback-detail-page">
       <FeedbackDetail feedback={feedback} />
@@ -406,13 +406,13 @@ import { AdminFeedbackList } from './components/AdminFeedbackList';
 
 export default async function AdminFeedbackPage() {
   const supabase = createSSRClient();
-  
+
   // Get feedback with counts
   const { data: feedbackCounts } = await supabase
     .from('feedback')
     .select('status', { count: 'exact', head: true })
     .eq('status', 'new');
-  
+
   const { data: feedback } = await supabase
     .from('feedback')
     .select(`
@@ -422,11 +422,11 @@ export default async function AdminFeedbackPage() {
       comments:feedback_comments(count)
     `)
     .order('created_at', { ascending: false });
-  
+
   return (
     <div className="admin-feedback">
       <h1>Feedback Management</h1>
-      
+
       <div className="stats">
         <div className="stat-card">
           <h3>New Feedback</h3>
@@ -434,7 +434,7 @@ export default async function AdminFeedbackPage() {
         </div>
         {/* Add more stat cards as needed */}
       </div>
-      
+
       <AdminFeedbackList feedback={feedback || []} />
     </div>
   );
@@ -451,14 +451,14 @@ import { FeedbackForm } from './FeedbackForm';
 
 export function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className="feedback-widget">
       {isOpen ? (
         <div className="feedback-modal">
           <div className="feedback-modal-header">
             <h2>Share Your Feedback</h2>
-            <button 
+            <button
               className="close-button"
               onClick={() => setIsOpen(false)}
             >
@@ -470,7 +470,7 @@ export function FeedbackWidget() {
           </div>
         </div>
       ) : (
-        <button 
+        <button
           className="feedback-button"
           onClick={() => setIsOpen(true)}
         >

@@ -15,7 +15,6 @@ services:
     restart: unless-stopped
     networks:
       - rentinity-network
-
   web:
     build:
       context: .
@@ -53,7 +52,6 @@ services:
     restart: unless-stopped
     networks:
       - rentinity-network
-
 networks:
   rentinity-network:
     driver: bridge

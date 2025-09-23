@@ -42,46 +42,46 @@ alter table public.rent_payments enable row level security;
 alter table public.dividend_distributions enable row level security;
 
 -- RLS Policies for rent_payments
-create policy "rent_payments_select_admin" 
-  on public.rent_payments for select to authenticated 
+create policy "rent_payments_select_admin"
+  on public.rent_payments for select to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "rent_payments_insert_admin" 
-  on public.rent_payments for insert to authenticated 
+create policy "rent_payments_insert_admin"
+  on public.rent_payments for insert to authenticated
   with check (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "rent_payments_update_admin" 
-  on public.rent_payments for update to authenticated 
+create policy "rent_payments_update_admin"
+  on public.rent_payments for update to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
 -- RLS Policies for dividend_distributions
-create policy "dividend_distributions_select_own" 
-  on public.dividend_distributions for select to authenticated 
+create policy "dividend_distributions_select_own"
+  on public.dividend_distributions for select to authenticated
   using (user_id = auth.uid() or exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "dividend_distributions_insert_admin" 
-  on public.dividend_distributions for insert to authenticated 
+create policy "dividend_distributions_insert_admin"
+  on public.dividend_distributions for insert to authenticated
   with check (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "dividend_distributions_update_admin" 
-  on public.dividend_distributions for update to authenticated 
+create policy "dividend_distributions_update_admin"
+  on public.dividend_distributions for update to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 

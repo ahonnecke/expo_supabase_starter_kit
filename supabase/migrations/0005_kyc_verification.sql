@@ -22,21 +22,21 @@ create trigger set_kyc_verifications_updated_at
 alter table public.kyc_verifications enable row level security;
 
 -- RLS Policies for kyc_verifications
-create policy "kyc_verifications_select_own" 
-  on public.kyc_verifications for select to authenticated 
+create policy "kyc_verifications_select_own"
+  on public.kyc_verifications for select to authenticated
   using (user_id = auth.uid() or exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "kyc_verifications_insert_own" 
-  on public.kyc_verifications for insert to authenticated 
+create policy "kyc_verifications_insert_own"
+  on public.kyc_verifications for insert to authenticated
   with check (user_id = auth.uid());
 
-create policy "kyc_verifications_update_admin" 
-  on public.kyc_verifications for update to authenticated 
+create policy "kyc_verifications_update_admin"
+  on public.kyc_verifications for update to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 

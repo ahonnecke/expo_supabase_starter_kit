@@ -1,18 +1,18 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { createPublicClient } from "@supa/supabase/src/client";
-import { useEffect, useState } from "react";
 import { useAuth } from "@supa/supabase/src/auth-context";
 import { ProtectedRoute } from "@supa/supabase/src/auth-middleware";
+import { createPublicClient } from "@supa/supabase/src/client";
+import { useEffect, useState } from "react";
 // Use window.location for navigation instead of Next.js router to avoid type issues
 
-type Profile = { 
-	id: string; 
-	first_name: string | null; 
-	last_name: string | null; 
-	username: string | null; 
-	avatar_url: string | null; 
+type Profile = {
+	id: string;
+	first_name: string | null;
+	last_name: string | null;
+	username: string | null;
+	avatar_url: string | null;
 	onboarded: boolean;
 	timezone: string;
 	locale: string;
@@ -29,7 +29,7 @@ function ProfileContent() {
 
 	useEffect(() => {
 		if (!user) return;
-		
+
 		const supabase = createPublicClient();
 		(async () => {
 			try {
@@ -39,9 +39,9 @@ function ProfileContent() {
 					.select("*")
 					.eq("id", user.id)
 					.maybeSingle();
-				
+
 				if (error) throw error;
-				
+
 				// If profile doesn't exist, create a temporary local profile
 				// We'll save it to the database when the user clicks Save
 				if (!data) {
@@ -54,9 +54,9 @@ function ProfileContent() {
 						onboarded: false,
 						timezone: "UTC",
 						locale: "en-US",
-						preferences: {}
+						preferences: {},
 					} as Profile;
-					
+
 					setProfile(newProfile);
 					setName("");
 				} else {
@@ -78,7 +78,7 @@ function ProfileContent() {
 			setError("Not signed in");
 			return;
 		}
-		
+
 		setError(null);
 		setIsSaving(true);
 		const supabase = createPublicClient();
@@ -142,12 +142,16 @@ function ProfileContent() {
 	return (
 		<main style={{ padding: 24, maxWidth: 640, margin: "0 auto" }}>
 			<h1>Profile</h1>
-			
+
 			<div style={styles.userInfo}>
-				<p><strong>Email:</strong> {user?.email}</p>
-				<p><strong>User ID:</strong> {user?.id}</p>
+				<p>
+					<strong>Email:</strong> {user?.email}
+				</p>
+				<p>
+					<strong>User ID:</strong> {user?.id}
+				</p>
 			</div>
-			
+
 			<form onSubmit={onSave}>
 				<label htmlFor="firstName">First Name</label>
 				<input
@@ -157,24 +161,17 @@ function ProfileContent() {
 					placeholder="First name"
 					style={styles.input}
 				/>
-				
+
 				<div>
-					<button 
-						type="submit" 
-						style={styles.button}
-						disabled={isSaving}
-					>
+					<button type="submit" style={styles.button} disabled={isSaving}>
 						{isSaving ? "Saving..." : "Save Profile"}
 					</button>
 				</div>
-				
+
 				{error && <p style={{ color: "crimson", marginTop: 10 }}>{error}</p>}
 			</form>
-			
-			<button 
-				onClick={handleSignOut} 
-				style={styles.dangerButton}
-			>
+
+			<button onClick={handleSignOut} style={styles.dangerButton}>
 				Sign Out
 			</button>
 		</main>

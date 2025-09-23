@@ -1,2 +1,2 @@
 // Direct export from src/client.ts
-export { createPublicClient, createSSRClient } from './src/client';
+export { createPublicClient, createSSRClient } from "./src/client";

@@ -24,4 +24,3 @@ transactions per second
 half traded, 1 million transactions a month
 
 why not start on not-blockchain
-

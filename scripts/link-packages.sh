@@ -12,30 +12,30 @@ link_package() {
   local package_name=$1
   local package_path=$2
   local target_path=$3
-  
+
   echo "Linking $package_name..."
-  
+
   # Create target directory
   mkdir -p $target_path
-  
+
   # Check if the package has a dist directory (compiled output)
   if [ -d "$package_path/dist" ]; then
     echo "  - Copying dist directory"
     mkdir -p $target_path/dist
     cp -r $package_path/dist/* $target_path/dist/
   fi
-  
+
   # Copy source files
   if [ -d "$package_path/src" ]; then
     echo "  - Copying src directory"
     mkdir -p $target_path/src
     cp -r $package_path/src/* $target_path/src/
   fi
-  
+
   # Copy package.json
   echo "  - Copying package.json"
   cp $package_path/package.json $target_path/
-  
+
   echo "  ✓ $package_name linked successfully"
 }
 

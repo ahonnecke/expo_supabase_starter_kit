@@ -176,5 +176,3 @@ We focus on Layer 1 and Layer 2 chains that can support:
 ---
 
 *Prepared: July 2025*
-
-

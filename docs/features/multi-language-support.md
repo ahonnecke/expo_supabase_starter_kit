@@ -121,23 +121,23 @@ export const getUserLanguage = async () => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       return getBrowserLanguage();
     }
-    
+
     const { data, error } = await supabase
       .from('user_language_preferences')
       .select('language_code')
       .eq('user_id', user.id)
       .single();
-    
+
     if (error || !data) {
       return getBrowserLanguage();
     }
-    
+
     return data.language_code;
   } catch (error) {
     console.error('Error getting user language:', error);
@@ -150,12 +150,12 @@ export const getBrowserLanguage = () => {
   if (typeof navigator === 'undefined') {
     return DEFAULT_LANGUAGE;
   }
-  
+
   const browserLang = navigator.language.split('-')[0];
-  
+
   // Check if browser language is supported
   const isSupported = AVAILABLE_LANGUAGES.some(lang => lang.code === browserLang);
-  
+
   return isSupported ? browserLang : DEFAULT_LANGUAGE;
 };
 
@@ -166,13 +166,13 @@ export const setUserLanguage = async (languageCode: string) => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
-    
+
     const { error } = await supabase
       .from('user_language_preferences')
       .upsert({
@@ -182,11 +182,11 @@ export const setUserLanguage = async (languageCode: string) => {
       }, {
         onConflict: 'user_id',
       });
-    
+
     if (error) {
       throw error;
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error setting user language:', error);
@@ -204,23 +204,23 @@ export const loadTranslations = async (
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data, error } = await supabase
       .from('translations')
       .select('key, value')
       .eq('language_code', languageCode)
       .eq('namespace', namespace);
-    
+
     if (error) {
       throw error;
     }
-    
+
     // Convert to key-value object
     const translations = data.reduce((acc, { key, value }) => {
       acc[key] = value;
       return acc;
     }, {});
-    
+
     return translations;
   } catch (error) {
     console.error(`Error loading translations for ${languageCode}/${namespace}:`, error);
@@ -245,10 +245,10 @@ export default getRequestConfig(async ({ locale }) => {
   if (!locales.includes(locale as any)) {
     notFound();
   }
-  
+
   // Load translations from database
   const messages = await loadTranslations(locale);
-  
+
   return {
     messages,
     timeZone: 'UTC',
@@ -266,10 +266,10 @@ import { locales } from './i18n';
 export default createMiddleware({
   // A list of all locales that are supported
   locales,
-  
+
   // If this locale is matched, pathnames work without a prefix (e.g. `/about`)
   defaultLocale: 'en',
-  
+
   // Detect locale from Accept-Language header
   localeDetection: true,
 });
@@ -310,7 +310,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  
+
   useEffect(() => {
     const loadLanguage = async () => {
       try {
@@ -322,34 +322,34 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     };
-    
+
     loadLanguage();
   }, []);
-  
+
   const changeLanguage = async (languageCode: string) => {
     try {
       // Save user preference
       await setUserLanguage(languageCode);
-      
+
       // Update state
       setCurrentLanguage(languageCode);
-      
+
       // Navigate to the same page with new locale
       const currentPathname = pathname || '/';
-      
+
       // Extract locale from pathname
       const pathnameWithoutLocale = currentPathname
         .split('/')
         .slice(2)
         .join('/');
-      
+
       // Navigate to new locale path
       router.push(`/${languageCode}/${pathnameWithoutLocale}`);
     } catch (error) {
       console.error('Error changing language:', error);
     }
   };
-  
+
   return (
     <LanguageContext.Provider
       value={{
@@ -376,13 +376,13 @@ import { useLanguage } from '@supa/shared';
 export function LanguageSelector() {
   const { currentLanguage, availableLanguages, changeLanguage, isLoading } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   const currentLang = availableLanguages.find(lang => lang.code === currentLanguage);
-  
+
   return (
     <div className="language-selector">
       <button
@@ -391,7 +391,7 @@ export function LanguageSelector() {
       >
         {currentLang?.native || 'English'}
       </button>
-      
+
       {isOpen && (
         <div className="language-dropdown">
           {availableLanguages.map(language => (
@@ -431,7 +431,7 @@ export default function TranslationManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTranslation, setEditingTranslation] = useState(null);
-  
+
   useEffect(() => {
     // Load languages
     const loadLanguages = async () => {
@@ -442,11 +442,11 @@ export default function TranslationManager() {
           .select('*')
           .order('is_default', { ascending: false })
           .order('name');
-        
+
         if (error) throw error;
-        
+
         setLanguages(data || []);
-        
+
         // Set default selected language
         if (data && data.length > 0) {
           const defaultLang = data.find(lang => lang.is_default) || data[0];
@@ -456,7 +456,7 @@ export default function TranslationManager() {
         console.error('Error loading languages:', error);
       }
     };
-    
+
     // Load namespaces
     const loadNamespaces = async () => {
       try {
@@ -465,9 +465,9 @@ export default function TranslationManager() {
           .from('translations')
           .select('namespace')
           .distinct();
-        
+
         if (error) throw error;
-        
+
         if (data && data.length > 0) {
           setNamespaces([...new Set(data.map(item => item.namespace))]);
         }
@@ -475,20 +475,20 @@ export default function TranslationManager() {
         console.error('Error loading namespaces:', error);
       }
     };
-    
+
     Promise.all([loadLanguages(), loadNamespaces()])
       .finally(() => setIsLoading(false));
   }, []);
-  
+
   // Load translations when language or namespace changes
   useEffect(() => {
     if (!selectedLanguage || !selectedNamespace) {
       return;
     }
-    
+
     const loadTranslations = async () => {
       setIsLoading(true);
-      
+
       try {
         const supabase = createPublicClient();
         const { data, error } = await supabase
@@ -497,9 +497,9 @@ export default function TranslationManager() {
           .eq('language_code', selectedLanguage)
           .eq('namespace', selectedNamespace)
           .order('key');
-        
+
         if (error) throw error;
-        
+
         setTranslations(data || []);
       } catch (error) {
         console.error('Error loading translations:', error);
@@ -507,10 +507,10 @@ export default function TranslationManager() {
         setIsLoading(false);
       }
     };
-    
+
     loadTranslations();
   }, [selectedLanguage, selectedNamespace]);
-  
+
   // Filter translations by search query
   const filteredTranslations = searchQuery
     ? translations.filter(
@@ -518,7 +518,7 @@ export default function TranslationManager() {
              t.value.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : translations;
-  
+
   // Save translation
   const saveTranslation = async (translation) => {
     try {
@@ -531,9 +531,9 @@ export default function TranslationManager() {
         }, {
           onConflict: 'namespace,key,language_code',
         });
-      
+
       if (error) throw error;
-      
+
       // Refresh translations
       const { data } = await supabase
         .from('translations')
@@ -541,14 +541,14 @@ export default function TranslationManager() {
         .eq('language_code', selectedLanguage)
         .eq('namespace', selectedNamespace)
         .order('key');
-      
+
       setTranslations(data || []);
       setEditingTranslation(null);
     } catch (error) {
       console.error('Error saving translation:', error);
     }
   };
-  
+
   // Add new translation
   const addNewTranslation = () => {
     setEditingTranslation({
@@ -559,15 +559,15 @@ export default function TranslationManager() {
       value: '',
     });
   };
-  
+
   if (isLoading && (!languages.length || !namespaces.length)) {
     return <div>Loading translation manager...</div>;
   }
-  
+
   return (
     <div className="translation-manager">
       <h1>Translation Manager</h1>
-      
+
       <div className="filters">
         <div className="filter-group">
           <label>Language:</label>
@@ -582,7 +582,7 @@ export default function TranslationManager() {
             ))}
           </select>
         </div>
-        
+
         <div className="filter-group">
           <label>Namespace:</label>
           <select
@@ -594,7 +594,7 @@ export default function TranslationManager() {
             ))}
           </select>
         </div>
-        
+
         <div className="filter-group">
           <label>Search:</label>
           <input
@@ -604,7 +604,7 @@ export default function TranslationManager() {
             placeholder="Search keys or values..."
           />
         </div>
-        
+
         <button
           className="add-translation-button"
           onClick={addNewTranslation}
@@ -612,7 +612,7 @@ export default function TranslationManager() {
           Add New Translation
         </button>
       </div>
-      
+
       {isLoading ? (
         <div>Loading translations...</div>
       ) : (
@@ -649,12 +649,12 @@ export default function TranslationManager() {
           </table>
         </div>
       )}
-      
+
       {editingTranslation && (
         <div className="translation-editor-modal">
           <div className="translation-editor">
             <h2>{editingTranslation.id ? 'Edit Translation' : 'Add Translation'}</h2>
-            
+
             <div className="form-group">
               <label>Key:</label>
               <input
@@ -666,7 +666,7 @@ export default function TranslationManager() {
                 })}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Value:</label>
               <textarea
@@ -678,7 +678,7 @@ export default function TranslationManager() {
                 rows={5}
               />
             </div>
-            
+
             <div className="button-group">
               <button
                 className="cancel-button"
@@ -734,7 +734,7 @@ export const formatDate = (
   timeZone: string = 'UTC'
 ) => {
   const locale = locales[languageCode] || enUS;
-  
+
   return formatInTimeZone(date, timeZone, formatStr, {
     locale,
   });
@@ -747,7 +747,7 @@ export const formatRelativeTime = (
   languageCode: string = 'en'
 ) => {
   const locale = locales[languageCode] || enUS;
-  
+
   return formatRelative(date, baseDate, {
     locale,
   });
@@ -760,7 +760,7 @@ export const formatTimeDistance = (
   languageCode: string = 'en'
 ) => {
   const locale = locales[languageCode] || enUS;
-  
+
   return formatDistance(date, baseDate, {
     addSuffix: true,
     locale,
@@ -804,7 +804,7 @@ export default async function LocaleLayout({ children, params: { locale } }) {
   if (!locales.includes(locale)) {
     notFound();
   }
-  
+
   let messages;
   try {
     messages = (await import(`../../messages/${locale}.json`)).default;
@@ -812,7 +812,7 @@ export default async function LocaleLayout({ children, params: { locale } }) {
     // Fallback to empty messages
     messages = {};
   }
-  
+
   return (
     <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <body>

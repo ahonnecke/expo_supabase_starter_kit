@@ -101,7 +101,7 @@ npm run test:watch
    ```bash
    # Copy environment variables
    cp .env.example .env
-   
+
    # Fill in required values:
    # - PRIVATE_KEY (admin wallet private key)
    # - POLYGON_MUMBAI_RPC_URL
@@ -111,10 +111,10 @@ npm run test:watch
 2. **Deploy Contracts:**
    ```bash
    cd packages/contracts
-   
+
    # Deploy to local network
    npx hardhat run scripts/deploy.ts --network localhost
-   
+
    # Deploy to Mumbai testnet
    npx hardhat run scripts/deploy.ts --network mumbai
    ```
@@ -151,12 +151,12 @@ npm run test:watch
    ```bash
    # Use Hardhat console to interact with contracts
    npx hardhat console --network mumbai
-   
+
    # Get contract instance
    const factory = await ethers.getContractAt("PropertyTokenFactory", "FACTORY_ADDRESS");
    const tokenAddress = await factory.propertyIdToToken("PROPERTY_ID");
    const token = await ethers.getContractAt("PropertyToken", tokenAddress);
-   
+
    # Set KYC status for addresses
    await token.setKycStatus("WALLET_ADDRESS", true);
    ```
@@ -236,7 +236,7 @@ npm run test:watch
    ```bash
    # Check API logs
    docker compose logs web
-   
+
    # Follow logs in real-time
    docker compose logs -f web
    ```
@@ -244,13 +244,13 @@ npm run test:watch
 3. **Database State:**
    ```sql
    -- Check property token addresses
-   SELECT id, address, token_contract_address, metadata 
-   FROM properties 
+   SELECT id, address, token_contract_address, metadata
+   FROM properties
    WHERE token_contract_address IS NOT NULL;
-   
+
    -- Check ownership records
-   SELECT ol.*, p.address as property_address 
-   FROM ownership_ledger ol 
+   SELECT ol.*, p.address as property_address
+   FROM ownership_ledger ol
    JOIN properties p ON ol.property_id = p.id;
    ```
 
@@ -286,7 +286,7 @@ artillery run test/load-test.yml
    ```bash
    # Install Slither
    pip install slither-analyzer
-   
+
    # Run analysis
    slither packages/contracts/contracts/
    ```
@@ -295,7 +295,7 @@ artillery run test/load-test.yml
    ```bash
    # Install Mythril
    pip install mythril
-   
+
    # Analyze contracts
    myth analyze packages/contracts/contracts/PropertyToken.sol
    ```
@@ -328,7 +328,7 @@ artillery run test/load-test.yml
    ```bash
    # Deploy to testnet first
    npx hardhat run scripts/deploy.ts --network mumbai
-   
+
    # Verify contracts
    npx hardhat verify --network mumbai FACTORY_ADDRESS OWNER_ADDRESS
    ```
@@ -337,7 +337,7 @@ artillery run test/load-test.yml
    ```bash
    # Update environment variables
    export NEXT_PUBLIC_PROPERTY_TOKEN_FACTORY_ADDRESS="DEPLOYED_ADDRESS"
-   
+
    # Update database
    # Add factory address to configuration table
    ```
@@ -346,7 +346,7 @@ artillery run test/load-test.yml
    ```bash
    # Build and deploy
    docker compose up -d
-   
+
    # Verify deployment
    curl http://localhost:3000/api/health
    ```

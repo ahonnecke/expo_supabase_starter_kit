@@ -118,20 +118,20 @@ export const uploadFile = async (file, folderId = null) => {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-  
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('User not authenticated');
-  
+
   // Create storage path
   const storagePath = `${user.id}/${uuidv4()}-${file.name}`;
-  
+
   // Upload file to storage
   const { error: uploadError } = await supabase.storage
     .from('user_files')
     .upload(storagePath, file);
-  
+
   if (uploadError) throw uploadError;
-  
+
   // Create file record in database
   const { data: fileRecord, error: dbError } = await supabase
     .from('files')
@@ -147,9 +147,9 @@ export const uploadFile = async (file, folderId = null) => {
     })
     .select()
     .single();
-  
+
   if (dbError) throw dbError;
-  
+
   return fileRecord;
 };
 ```
@@ -168,29 +168,29 @@ export function FileBrowser({ folderId = null }) {
   const [isLoading, setIsLoading] = useState(true);
   const [currentFolder, setCurrentFolder] = useState(folderId);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
-  
+
   // Load files for current folder
   useEffect(() => {
     const loadFiles = async () => {
       setIsLoading(true);
-      
+
       try {
         const supabase = createBrowserClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         );
-        
+
         const { data, error } = await supabase
           .from('files')
           .select('*')
           .eq('parent_folder_id', currentFolder)
           .order('is_folder', { ascending: false })
           .order('name');
-        
+
         if (error) throw error;
-        
+
         setFiles(data || []);
-        
+
         // Load breadcrumbs
         if (currentFolder) {
           await loadBreadcrumbs(currentFolder);
@@ -203,28 +203,28 @@ export function FileBrowser({ folderId = null }) {
         setIsLoading(false);
       }
     };
-    
+
     loadFiles();
   }, [currentFolder]);
-  
+
   // Load breadcrumb path
   const loadBreadcrumbs = async (folderId) => {
     try {
       const path = [];
       let currentId = folderId;
-      
+
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
-      
+
       while (currentId) {
         const { data } = await supabase
           .from('files')
           .select('id, name, parent_folder_id')
           .eq('id', currentId)
           .single();
-        
+
         if (data) {
           path.unshift(data);
           currentId = data.parent_folder_id;
@@ -232,14 +232,14 @@ export function FileBrowser({ folderId = null }) {
           break;
         }
       }
-      
+
       path.unshift({ id: null, name: 'Root' });
       setBreadcrumbs(path);
     } catch (error) {
       console.error('Error loading breadcrumbs:', error);
     }
   };
-  
+
   // Create new folder
   const createFolder = async (folderName) => {
     try {
@@ -247,9 +247,9 @@ export function FileBrowser({ folderId = null }) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
-      
+
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { data, error } = await supabase
         .from('files')
         .insert({
@@ -264,31 +264,31 @@ export function FileBrowser({ folderId = null }) {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
-      
+
       // Refresh file list
       setFiles(prev => [...prev, data]);
     } catch (error) {
       console.error('Error creating folder:', error);
     }
   };
-  
+
   // Handle file upload
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     try {
       const fileRecord = await uploadFile(file, currentFolder);
-      
+
       // Refresh file list
       setFiles(prev => [...prev, fileRecord]);
     } catch (error) {
       console.error('Error uploading file:', error);
     }
   };
-  
+
   // Render component
   return (
     <div className="file-browser">
@@ -306,7 +306,7 @@ export function FileBrowser({ folderId = null }) {
             </span>
           ))}
         </div>
-        
+
         <div className="file-actions">
           <button
             className="new-folder-button"
@@ -317,7 +317,7 @@ export function FileBrowser({ folderId = null }) {
           >
             New Folder
           </button>
-          
+
           <label className="upload-button">
             Upload File
             <input
@@ -328,7 +328,7 @@ export function FileBrowser({ folderId = null }) {
           </label>
         </div>
       </div>
-      
+
       {isLoading ? (
         <div className="loading">Loading files...</div>
       ) : (
@@ -412,13 +412,13 @@ async function downloadFile(file) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data, error } = await supabase.storage
       .from(file.bucket_id)
       .download(file.storage_path);
-    
+
     if (error) throw error;
-    
+
     // Create download link
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
@@ -442,26 +442,26 @@ async function deleteFile(file) {
   if (!confirm(`Are you sure you want to delete ${file.name}?`)) {
     return;
   }
-  
+
   try {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     // Delete from storage if not a folder
     if (!file.is_folder) {
       await supabase.storage
         .from(file.bucket_id)
         .remove([file.storage_path]);
     }
-    
+
     // Delete from database
     await supabase
       .from('files')
       .delete()
       .eq('id', file.id);
-    
+
     // Refresh file list (would be handled by parent component)
     window.location.reload();
   } catch (error) {

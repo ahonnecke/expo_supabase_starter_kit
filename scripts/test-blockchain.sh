@@ -130,11 +130,11 @@ cd packages/contracts
 
 if npm run deploy:localhost; then
     print_status "Contracts deployed successfully"
-    
+
     # Extract contract addresses from deployment
     FACTORY_ADDRESS=$(cat deployments/localhost.json | grep -o '"propertyTokenFactory":"[^"]*' | cut -d'"' -f4)
     echo "PropertyTokenFactory deployed at: $FACTORY_ADDRESS"
-    
+
     # Update environment variable
     if [ -n "$FACTORY_ADDRESS" ]; then
         sed -i "s/NEXT_PUBLIC_PROPERTY_TOKEN_FACTORY_ADDRESS=.*/NEXT_PUBLIC_PROPERTY_TOKEN_FACTORY_ADDRESS=$FACTORY_ADDRESS/" ../../.env

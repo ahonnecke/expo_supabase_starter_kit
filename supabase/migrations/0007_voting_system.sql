@@ -39,12 +39,12 @@ ALTER TABLE public.proposal_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
 
 -- Proposals policies
-CREATE POLICY "Proposals are viewable by authenticated users" 
-ON public.proposals FOR SELECT 
+CREATE POLICY "Proposals are viewable by authenticated users"
+ON public.proposals FOR SELECT
 USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Proposals can be created by property owners" 
-ON public.proposals FOR INSERT 
+CREATE POLICY "Proposals can be created by property owners"
+ON public.proposals FOR INSERT
 WITH CHECK (
   auth.uid() = created_by AND
   EXISTS (
@@ -53,17 +53,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Proposals can be updated by their creators" 
-ON public.proposals FOR UPDATE 
+CREATE POLICY "Proposals can be updated by their creators"
+ON public.proposals FOR UPDATE
 USING (auth.uid() = created_by);
 
 -- Proposal options policies
-CREATE POLICY "Proposal options are viewable by authenticated users" 
-ON public.proposal_options FOR SELECT 
+CREATE POLICY "Proposal options are viewable by authenticated users"
+ON public.proposal_options FOR SELECT
 USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Proposal options can be created by proposal creators" 
-ON public.proposal_options FOR INSERT 
+CREATE POLICY "Proposal options can be created by proposal creators"
+ON public.proposal_options FOR INSERT
 WITH CHECK (
   EXISTS (
     SELECT 1 FROM public.proposals p
@@ -71,8 +71,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Proposal options can be updated by proposal creators" 
-ON public.proposal_options FOR UPDATE 
+CREATE POLICY "Proposal options can be updated by proposal creators"
+ON public.proposal_options FOR UPDATE
 USING (
   EXISTS (
     SELECT 1 FROM public.proposals p
@@ -81,26 +81,26 @@ USING (
 );
 
 -- Votes policies
-CREATE POLICY "Votes are viewable by authenticated users" 
-ON public.votes FOR SELECT 
+CREATE POLICY "Votes are viewable by authenticated users"
+ON public.votes FOR SELECT
 USING (auth.uid() IS NOT NULL);
 
-CREATE POLICY "Users can vote on active proposals if they own shares" 
-ON public.votes FOR INSERT 
+CREATE POLICY "Users can vote on active proposals if they own shares"
+ON public.votes FOR INSERT
 WITH CHECK (
   auth.uid() = user_id AND
   EXISTS (
     SELECT 1 FROM public.proposals p
     JOIN public.ownership_ledger ol ON p.property_id = ol.property_id
-    WHERE p.id = proposal_id 
+    WHERE p.id = proposal_id
     AND ol.user_id = auth.uid()
     AND p.status = 'active'
     AND now() BETWEEN p.start_date AND p.end_date
   )
 );
 
-CREATE POLICY "Users can update their own votes" 
-ON public.votes FOR UPDATE 
+CREATE POLICY "Users can update their own votes"
+ON public.votes FOR UPDATE
 USING (auth.uid() = user_id);
 
 -- Create function to calculate vote weight based on ownership
@@ -118,7 +118,7 @@ BEGIN
   SELECT shares_owned INTO _weight
   FROM public.ownership_ledger
   WHERE user_id = _user_id AND property_id = _property_id;
-  
+
   RETURN COALESCE(_weight, 0);
 END;
 $$;
@@ -134,7 +134,7 @@ BEGIN
   UPDATE public.proposals
   SET status = 'completed', updated_at = now()
   WHERE id = NEW.id AND status = 'active' AND end_date < now();
-  
+
   RETURN NEW;
 END;
 $$;

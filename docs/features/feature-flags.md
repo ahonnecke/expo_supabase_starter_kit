@@ -98,10 +98,10 @@ export const getFeatureFlag = async (key: string) => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     // Check for user-specific override
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (user) {
       const { data: override } = await supabase
         .from('user_feature_overrides')
@@ -109,57 +109,57 @@ export const getFeatureFlag = async (key: string) => {
         .eq('user_id', user.id)
         .eq('feature_key', key)
         .single();
-      
+
       if (override) {
         return override.is_enabled;
       }
     }
-    
+
     // Get feature flag
     const { data: flag, error } = await supabase
       .from('feature_flags')
       .select('*')
       .eq('key', key)
       .single();
-    
+
     if (error || !flag) {
       return false;
     }
-    
+
     // If flag is disabled, return false
     if (!flag.is_enabled) {
       return false;
     }
-    
+
     // Check rules based on flag type
     switch (flag.type) {
       case 'boolean':
         return flag.is_enabled;
-        
+
       case 'percentage':
         const percentage = flag.rules.percentage || 0;
         return Math.random() * 100 < percentage;
-        
+
       case 'user_group':
         if (!user) return false;
-        
+
         const userGroups = flag.rules.groups || [];
         const { data: userProfile } = await supabase
           .from('user_profiles')
           .select('role, subscription_tier')
           .eq('id', user.id)
           .single();
-          
+
         if (!userProfile) return false;
-        
-        return userGroups.includes(userProfile.role) || 
+
+        return userGroups.includes(userProfile.role) ||
                userGroups.includes(userProfile.subscription_tier);
-        
+
       case 'environment':
         const environments = flag.rules.environments || [];
         const currentEnv = process.env.NEXT_PUBLIC_APP_ENV || 'development';
         return environments.includes(currentEnv);
-        
+
       default:
         return false;
     }
@@ -176,14 +176,14 @@ export const getAllFeatureFlags = async () => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data, error } = await supabase
       .from('feature_flags')
       .select('*')
       .order('name');
-    
+
     if (error) throw error;
-    
+
     return data || [];
   } catch (error) {
     console.error('Error getting all feature flags:', error);
@@ -198,7 +198,7 @@ export const upsertFeatureFlag = async (flag) => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     // Get previous state for history
     let previousState = null;
     if (flag.key) {
@@ -207,10 +207,10 @@ export const upsertFeatureFlag = async (flag) => {
         .select('*')
         .eq('key', flag.key)
         .single();
-      
+
       previousState = data;
     }
-    
+
     // Update or create flag
     const { data, error } = await supabase
       .from('feature_flags')
@@ -222,12 +222,12 @@ export const upsertFeatureFlag = async (flag) => {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
-    
+
     // Record history
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (user) {
       await supabase
         .from('feature_flag_history')
@@ -239,7 +239,7 @@ export const upsertFeatureFlag = async (flag) => {
           performed_by: user.id,
         });
     }
-    
+
     return data;
   } catch (error) {
     console.error('Error upserting feature flag:', error);
@@ -254,7 +254,7 @@ export const setUserFeatureOverride = async (userId: string, featureKey: string,
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { error } = await supabase
       .from('user_feature_overrides')
       .upsert({
@@ -265,9 +265,9 @@ export const setUserFeatureOverride = async (userId: string, featureKey: string,
       }, {
         onConflict: 'user_id,feature_key',
       });
-    
+
     if (error) throw error;
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error setting user feature override:', error);
@@ -292,42 +292,42 @@ interface FeatureFlagState {
 export const useFeatureFlags = create<FeatureFlagState>((set, get) => ({
   flags: {},
   isLoading: {},
-  
+
   checkFlag: async (key: string) => {
     // Return cached value if available
     if (get().flags[key] !== undefined) {
       return get().flags[key];
     }
-    
+
     // Set loading state
     set(state => ({
       isLoading: { ...state.isLoading, [key]: true },
     }));
-    
+
     try {
       // Get flag value
       const isEnabled = await getFeatureFlag(key);
-      
+
       // Update state
       set(state => ({
         flags: { ...state.flags, [key]: isEnabled },
         isLoading: { ...state.isLoading, [key]: false },
       }));
-      
+
       return isEnabled;
     } catch (error) {
       console.error(`Error checking feature flag ${key}:`, error);
-      
+
       // Update state with default (false)
       set(state => ({
         flags: { ...state.flags, [key]: false },
         isLoading: { ...state.isLoading, [key]: false },
       }));
-      
+
       return false;
     }
   },
-  
+
   setFlag: (key: string, value: boolean) => {
     set(state => ({
       flags: { ...state.flags, [key]: value },
@@ -345,28 +345,28 @@ import { useFeatureFlags } from './store';
 export function useFeatureFlag(key: string, defaultValue: boolean = false) {
   const { flags, isLoading, checkFlag } = useFeatureFlags();
   const [isEnabled, setIsEnabled] = useState(flags[key] ?? defaultValue);
-  
+
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadFlag = async () => {
       const value = await checkFlag(key);
       if (isMounted) {
         setIsEnabled(value);
       }
     };
-    
+
     if (flags[key] === undefined) {
       loadFlag();
     } else {
       setIsEnabled(flags[key]);
     }
-    
+
     return () => {
       isMounted = false;
     };
   }, [key, checkFlag, flags]);
-  
+
   return {
     isEnabled,
     isLoading: isLoading[key] ?? false,
@@ -390,7 +390,7 @@ interface FeatureFlagProps {
 
 export function FeatureFlag({ flag, children, fallback = null }: FeatureFlagProps) {
   const { isEnabled } = useFeatureFlag(flag);
-  
+
   return isEnabled ? <>{children}</> : <>{fallback}</>;
 }
 ```
@@ -408,7 +408,7 @@ export default function FeatureFlagAdmin() {
   const [flags, setFlags] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingFlag, setEditingFlag] = useState(null);
-  
+
   useEffect(() => {
     const loadFlags = async () => {
       try {
@@ -420,19 +420,19 @@ export default function FeatureFlagAdmin() {
         setIsLoading(false);
       }
     };
-    
+
     loadFlags();
   }, []);
-  
+
   const handleSaveFlag = async () => {
     try {
       // Generate key if new flag
       if (!editingFlag.key) {
         editingFlag.key = nanoid(8);
       }
-      
+
       const savedFlag = await upsertFeatureFlag(editingFlag);
-      
+
       // Update flags list
       setFlags(prev => {
         const index = prev.findIndex(f => f.key === savedFlag.key);
@@ -442,22 +442,22 @@ export default function FeatureFlagAdmin() {
           return [...prev, savedFlag];
         }
       });
-      
+
       setEditingFlag(null);
     } catch (error) {
       console.error('Error saving feature flag:', error);
     }
   };
-  
+
   const toggleFlag = async (flag) => {
     try {
       const updatedFlag = {
         ...flag,
         is_enabled: !flag.is_enabled,
       };
-      
+
       const savedFlag = await upsertFeatureFlag(updatedFlag);
-      
+
       // Update flags list
       setFlags(prev => {
         const index = prev.findIndex(f => f.key === savedFlag.key);
@@ -467,15 +467,15 @@ export default function FeatureFlagAdmin() {
       console.error('Error toggling feature flag:', error);
     }
   };
-  
+
   if (isLoading) {
     return <div>Loading feature flags...</div>;
   }
-  
+
   return (
     <div className="feature-flag-admin">
       <h1>Feature Flags</h1>
-      
+
       <button
         className="new-flag-button"
         onClick={() => setEditingFlag({
@@ -488,7 +488,7 @@ export default function FeatureFlagAdmin() {
       >
         New Feature Flag
       </button>
-      
+
       <div className="flags-table">
         <table>
           <thead>
@@ -535,12 +535,12 @@ export default function FeatureFlagAdmin() {
           </tbody>
         </table>
       </div>
-      
+
       {editingFlag && (
         <div className="flag-editor-modal">
           <div className="flag-editor">
             <h2>{editingFlag.key ? 'Edit Feature Flag' : 'New Feature Flag'}</h2>
-            
+
             <div className="form-group">
               <label>Name:</label>
               <input
@@ -552,7 +552,7 @@ export default function FeatureFlagAdmin() {
                 })}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Description:</label>
               <textarea
@@ -564,7 +564,7 @@ export default function FeatureFlagAdmin() {
                 rows={3}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Type:</label>
               <select
@@ -581,7 +581,7 @@ export default function FeatureFlagAdmin() {
                 <option value="environment">Environment</option>
               </select>
             </div>
-            
+
             {editingFlag.type === 'percentage' && (
               <div className="form-group">
                 <label>Percentage (0-100):</label>
@@ -600,7 +600,7 @@ export default function FeatureFlagAdmin() {
                 />
               </div>
             )}
-            
+
             {editingFlag.type === 'user_group' && (
               <div className="form-group">
                 <label>User Groups (comma separated):</label>
@@ -617,7 +617,7 @@ export default function FeatureFlagAdmin() {
                 />
               </div>
             )}
-            
+
             {editingFlag.type === 'environment' && (
               <div className="form-group">
                 <label>Environments:</label>
@@ -654,7 +654,7 @@ export default function FeatureFlagAdmin() {
                 </div>
               </div>
             )}
-            
+
             <div className="form-group">
               <label>Status:</label>
               <div className="toggle-switch">
@@ -672,7 +672,7 @@ export default function FeatureFlagAdmin() {
                 </label>
               </div>
             </div>
-            
+
             <div className="button-group">
               <button
                 className="cancel-button"
@@ -707,11 +707,11 @@ export default function SomePage() {
   return (
     <div>
       <h1>My Page</h1>
-      
+
       <FeatureFlag flag="new_dashboard">
         <NewDashboard />
       </FeatureFlag>
-      
+
       <FeatureFlag flag="beta_feature" fallback={<LegacyFeature />}>
         <BetaFeature />
       </FeatureFlag>
@@ -727,7 +727,7 @@ import { useFeatureFlag } from '@supa/shared';
 
 export default function HomeScreen() {
   const { isEnabled: showNewUI } = useFeatureFlag('mobile_new_ui');
-  
+
   return (
     <View>
       {showNewUI ? (
@@ -748,7 +748,7 @@ import { getFeatureFlag } from '@supa/shared';
 export async function GET(request) {
   // Check if feature is enabled
   const isFeatureEnabled = await getFeatureFlag('api_v2');
-  
+
   if (isFeatureEnabled) {
     return Response.json({ version: 'v2', data: {} });
   } else {

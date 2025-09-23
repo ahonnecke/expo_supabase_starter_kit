@@ -83,75 +83,75 @@ alter table public.ownership_ledger enable row level security;
 alter table public.transactions enable row level security;
 
 -- RLS Policies for properties
-create policy "properties_select_all" 
+create policy "properties_select_all"
   on public.properties for select to authenticated using (true);
 
-create policy "properties_insert_admin" 
-  on public.properties for insert to authenticated 
+create policy "properties_insert_admin"
+  on public.properties for insert to authenticated
   with check (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "properties_update_admin" 
-  on public.properties for update to authenticated 
+create policy "properties_update_admin"
+  on public.properties for update to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
 -- RLS Policies for LLCs
-create policy "llcs_select_all" 
+create policy "llcs_select_all"
   on public.llcs for select to authenticated using (true);
 
-create policy "llcs_insert_admin" 
-  on public.llcs for insert to authenticated 
+create policy "llcs_insert_admin"
+  on public.llcs for insert to authenticated
   with check (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "llcs_update_admin" 
-  on public.llcs for update to authenticated 
+create policy "llcs_update_admin"
+  on public.llcs for update to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
 -- RLS Policies for ownership_ledger
-create policy "ownership_ledger_select_own" 
-  on public.ownership_ledger for select to authenticated 
+create policy "ownership_ledger_select_own"
+  on public.ownership_ledger for select to authenticated
   using (user_id = auth.uid() or exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "ownership_ledger_insert_admin" 
-  on public.ownership_ledger for insert to authenticated 
+create policy "ownership_ledger_insert_admin"
+  on public.ownership_ledger for insert to authenticated
   with check (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "ownership_ledger_update_admin" 
-  on public.ownership_ledger for update to authenticated 
+create policy "ownership_ledger_update_admin"
+  on public.ownership_ledger for update to authenticated
   using (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
 -- RLS Policies for transactions
-create policy "transactions_select_own" 
-  on public.transactions for select to authenticated 
+create policy "transactions_select_own"
+  on public.transactions for select to authenticated
   using (user_id = auth.uid() or exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
-create policy "transactions_insert_admin" 
-  on public.transactions for insert to authenticated 
+create policy "transactions_insert_admin"
+  on public.transactions for insert to authenticated
   with check (exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   ));
 
@@ -187,7 +187,7 @@ to authenticated
 with check (
   bucket_id = 'property-docs'
   and exists (
-    select 1 from public.user_profiles up 
+    select 1 from public.user_profiles up
     where up.id = auth.uid() and (up.preferences->>'isAdmin')::boolean = true
   )
 );

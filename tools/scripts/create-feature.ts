@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
+import path from "path";
 // Usage: pnpm gen:feature path/to/feature.yaml
 import fs from "fs-extra";
-import path from "path";
 import YAML from "yaml";
 
 const ROOT = process.cwd();

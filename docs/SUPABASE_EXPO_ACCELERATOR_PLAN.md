@@ -2,13 +2,13 @@
 
 ## What’s working now (baseline)
 - **Monorepo** (pnpm workspaces + Turborepo) with:
-  - `apps/web` — Next.js 14 (App Router)  
+  - `apps/web` — Next.js 14 (App Router)
   - `apps/mobile` — Expo Router (stubbed; not containerized yet)
   - `packages/*` — `ui`, `shared`, `supabase`
-- **Web app builds & runs in Docker**  
-  - `next.config.mjs` uses **no Tamagui Next plugin**; `output: 'standalone'`.  
-  - **Route guard** lives under `/app` (middleware protecting `/app/:path*`).  
-  - `docker compose.yml` runs `web` on port **3000**.  
+- **Web app builds & runs in Docker**
+  - `next.config.mjs` uses **no Tamagui Next plugin**; `output: 'standalone'`.
+  - **Route guard** lives under `/app` (middleware protecting `/app/:path*`).
+  - `docker compose.yml` runs `web` on port **3000**.
 - **Tamagui** is present in packages but **not extracted** on web (plugin disabled to keep Docker build clean).
 
 > Rationale: We prioritized a deterministic Docker build. Tamagui’s Next plugin can be reintroduced later with a known-good setup, without blocking web deploy.
@@ -28,28 +28,28 @@ Everything else from the original plan stays intact (Supabase, TypeScript, Zod, 
 ## Updated roadmap (phased, web-first)
 
 ### Phase 0 — Done
-- Monorepo skeleton, pnpm workspaces, Turbo  
-- Next.js app compiles under Docker (`output: 'standalone'`)  
-- Route guard under `/app`  
+- Monorepo skeleton, pnpm workspaces, Turbo
+- Next.js app compiles under Docker (`output: 'standalone'`)
+- Route guard under `/app`
 - Compose service for web
 
 ### Phase 1 — Supabase wiring (Web)
-1. Create a **Supabase project (dev)**.  
-2. Apply **baseline SQL** (profiles/orgs/memberships + RLS).  
-3. Add envs to `.env` (compose reads this):  
-   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
-   - `SUPABASE_URL`, `SUPABASE_ANON_KEY` (for SSR if needed)  
-4. Wire **auth (magic link)** on web: simple sign-in page → session → redirect to `/app`.  
+1. Create a **Supabase project (dev)**.
+2. Apply **baseline SQL** (profiles/orgs/memberships + RLS).
+3. Add envs to `.env` (compose reads this):
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_URL`, `SUPABASE_ANON_KEY` (for SSR if needed)
+4. Wire **auth (magic link)** on web: simple sign-in page → session → redirect to `/app`.
 5. Validate RLS by fetching `profiles` as the signed-in user.
 
 ### Phase 2 — First feature (Profile) shared
-1. Shared Zod schema + types in `packages/shared`.  
-2. Web pages: `/app/profile` view + edit (TanStack Query + Supabase).  
+1. Shared Zod schema + types in `packages/shared`.
+2. Web pages: `/app/profile` view + edit (TanStack Query + Supabase).
 3. Minimal mobile screen (not containerized yet) to keep parity.
 
 ### Phase 3 — CI + images
-1. GitHub Actions: typecheck, test, **`docker build`** for `web`.  
-2. Optionally push image to a registry (tag from git SHA).  
+1. GitHub Actions: typecheck, test, **`docker build`** for `web`.
+2. Optionally push image to a registry (tag from git SHA).
 3. Keep Vercel on the table if you want non-Docker web deploys later.
 
 ### Phase 4 — Database enhancements
@@ -82,17 +82,17 @@ Everything else from the original plan stays intact (Supabase, TypeScript, Zod, 
 ## Concrete next steps (do these in order)
 
 1. **Set Supabase env vars** in `.env` (compose reads them):
-   - `NEXT_PUBLIC_SUPABASE_URL=...`  
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY=...`  
-   - `SUPABASE_URL=...`  
+   - `NEXT_PUBLIC_SUPABASE_URL=...`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY=...`
+   - `SUPABASE_URL=...`
    - `SUPABASE_ANON_KEY=...`
-2. **Run DB migrations** in Supabase SQL editor using the plan’s baseline SQL (Profiles/Orgs/Memberships + RLS).  
+2. **Run DB migrations** in Supabase SQL editor using the plan’s baseline SQL (Profiles/Orgs/Memberships + RLS).
 3. **Implement web auth UI**:
-   - `/sign-in` page with “email magic link”.  
-   - On success, redirect to `/app`.  
+   - `/sign-in` page with “email magic link”.
+   - On success, redirect to `/app`.
    - In `/app/layout` or a top-level client provider, initialize Supabase browser client and query `auth.getSession()` on mount.
 4. **Protect server routes**:
-   - Keep **`middleware.ts`** checking session cookies for `/app/:path*` (already present).  
+   - Keep **`middleware.ts`** checking session cookies for `/app/:path*` (already present).
    - In server components under `/app`, call your SSR client with `cookies` to read user/session.
 5. **Add `/app/profile` feature**:
    - Query `profiles` by `auth.uid()`; render a form with Zod validation; update via Supabase.
@@ -105,7 +105,7 @@ Everything else from the original plan stays intact (Supabase, TypeScript, Zod, 
 
 ## Re-introducing Tamagui’s Next plugin (later, safely)
 When you want extraction/optimizations:
-1. Ensure `@tamagui/next-plugin` is in **`apps/web/devDependencies`**.  
+1. Ensure `@tamagui/next-plugin` is in **`apps/web/devDependencies`**.
 2. Use **ESM config** with **named import**:
    ```js
    // apps/web/next.config.mjs
@@ -120,7 +120,7 @@ When you want extraction/optimizations:
 3. Keep `output: 'standalone'` to match the Dockerfile.
 4. If build errors mention Edge runtime, split Supabase clients:
    - `client.browser.ts` (createBrowserClient) for client components
-   - `client.ssr.ts` (createServerClient) for middleware/server  
+   - `client.ssr.ts` (createServerClient) for middleware/server
    Then import the exact one needed to avoid bundling browser code into Edge.
 
 *(These are future steps; no action required now.)*
@@ -128,11 +128,11 @@ When you want extraction/optimizations:
 ---
 
 ## Definition of Done (current milestone)
-- ✅ Web app builds in Docker with `output: 'standalone'`.  
-- ✅ `/` public, `/app` protected via middleware.  
-- ⬜ Supabase envs configured in `.env`.  
-- ⬜ Auth (magic link) working end-to-end on web.  
-- ⬜ `/app/profile` working against RLS.  
+- ✅ Web app builds in Docker with `output: 'standalone'`.
+- ✅ `/` public, `/app` protected via middleware.
+- ⬜ Supabase envs configured in `.env`.
+- ⬜ Auth (magic link) working end-to-end on web.
+- ⬜ `/app/profile` working against RLS.
 - ⬜ CI building Docker image.
 
 ### Future Milestones

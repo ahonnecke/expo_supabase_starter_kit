@@ -83,19 +83,19 @@ def read_env_file() -> Dict[str, str]:
 def check_project_linked() -> bool:
     """Check if a project is linked to a remote Supabase instance."""
     log("Checking if a project is linked...")
-    
+
     # Check if the .supabase/config.json file exists, which indicates a linked project
     if not os.path.exists(".supabase/config.json"):
         log("No .supabase/config.json file found. Project is not linked.")
         return False
-        
+
     # Instead of using 'supabase status' which checks local containers,
     # we'll use a more reliable method to check remote project linking
     try:
         # Read the config file to verify it contains valid project information
         with open(".supabase/config.json", "r") as f:
             config = json.loads(f.read())
-            
+
         # Check if the config has project_id which indicates proper linking
         if "project_id" in config and config["project_id"]:
             log(f"Project is linked to remote project ID: {config['project_id']}")
@@ -182,7 +182,6 @@ def main():
     # Set up auth redirect URLs if not skipped
     if not args.skip_auth_setup:
         setup_auth_urls()
-
 
 
 if __name__ == "__main__":

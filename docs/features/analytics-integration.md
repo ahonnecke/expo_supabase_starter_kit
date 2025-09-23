@@ -69,8 +69,8 @@ pnpm add uuid @amplitude/analytics-browser recharts
    import * as amplitude from '@amplitude/analytics-browser';
 
    // Initialize session ID
-   const SESSION_ID = typeof window !== 'undefined' ? 
-     localStorage.getItem('analytics_session_id') || uuidv4() : 
+   const SESSION_ID = typeof window !== 'undefined' ?
+     localStorage.getItem('analytics_session_id') || uuidv4() :
      uuidv4();
 
    if (typeof window !== 'undefined') {
@@ -92,9 +92,9 @@ pnpm add uuid @amplitude/analytics-browser recharts
        process.env.NEXT_PUBLIC_SUPABASE_URL!,
        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
      );
-     
+
      const { data: { user } } = await supabase.auth.getUser();
-     
+
      if (!user) {
        return {
          allow_usage_tracking: true,
@@ -102,13 +102,13 @@ pnpm add uuid @amplitude/analytics-browser recharts
          anonymize_data: false,
        };
      }
-     
+
      const { data, error } = await supabase
        .from('analytics_preferences')
        .select('*')
        .eq('user_id', user.id)
        .single();
-     
+
      if (error || !data) {
        // Create default preferences
        const { data: newPrefs } = await supabase
@@ -121,14 +121,14 @@ pnpm add uuid @amplitude/analytics-browser recharts
          })
          .select()
          .single();
-       
+
        return newPrefs || {
          allow_usage_tracking: true,
          allow_error_reporting: true,
          anonymize_data: false,
        };
      }
-     
+
      return data;
    };
 
@@ -140,19 +140,19 @@ pnpm add uuid @amplitude/analytics-browser recharts
    ) => {
      try {
        const prefs = await getAnalyticsPreferences();
-       
+
        // Respect user preferences
        if (!prefs.allow_usage_tracking) {
          return;
        }
-       
+
        const supabase = createBrowserClient(
          process.env.NEXT_PUBLIC_SUPABASE_URL!,
          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
        );
-       
+
        const { data: { user } } = await supabase.auth.getUser();
-       
+
        // Get device info
        const deviceInfo = {
          userAgent: navigator.userAgent,
@@ -162,13 +162,13 @@ pnpm add uuid @amplitude/analytics-browser recharts
          viewportWidth: window.innerWidth,
          viewportHeight: window.innerHeight,
        };
-       
+
        // Anonymize data if requested
        const userId = prefs.anonymize_data ? null : user?.id;
-       const anonymizedProps = prefs.anonymize_data ? 
-         anonymizeProperties(eventProperties) : 
+       const anonymizedProps = prefs.anonymize_data ?
+         anonymizeProperties(eventProperties) :
          eventProperties;
-       
+
        // Store event in Supabase
        await supabase
          .from('analytics_events')
@@ -180,7 +180,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
            user_properties: prefs.anonymize_data ? {} : userProperties,
            device_info: deviceInfo,
          });
-       
+
        // Send to third-party analytics (if configured)
        if (process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) {
          amplitude.track(eventName, anonymizedProps);
@@ -193,16 +193,16 @@ pnpm add uuid @amplitude/analytics-browser recharts
    // Helper to anonymize sensitive data
    const anonymizeProperties = (props: Record<string, any>) => {
      const result = { ...props };
-     
+
      // Remove any potentially identifying information
      const keysToAnonymize = ['email', 'name', 'phone', 'address', 'ip', 'location'];
-     
+
      for (const key of Object.keys(result)) {
        if (keysToAnonymize.some(k => key.toLowerCase().includes(k))) {
          delete result[key];
        }
      }
-     
+
      return result;
    };
 
@@ -220,12 +220,12 @@ pnpm add uuid @amplitude/analytics-browser recharts
    export const trackError = async (error: Error, context: Record<string, any> = {}) => {
      try {
        const prefs = await getAnalyticsPreferences();
-       
+
        // Respect user preferences
        if (!prefs.allow_error_reporting) {
          return;
        }
-       
+
        trackEvent('error', {
          error_name: error.name,
          error_message: error.message,
@@ -242,10 +242,10 @@ pnpm add uuid @amplitude/analytics-browser recharts
    ```typescript
    // packages/shared/src/analytics/provider.tsx
    'use client';
-   
+
    import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
    import { initializeAnalytics, trackPageView, trackEvent, trackError, getAnalyticsPreferences } from './client';
-   
+
    interface AnalyticsContextType {
      trackEvent: typeof trackEvent;
      trackError: typeof trackError;
@@ -261,7 +261,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
        anonymize_data: boolean;
      }>) => Promise<void>;
    }
-   
+
    const AnalyticsContext = createContext<AnalyticsContextType>({
      trackEvent,
      trackError,
@@ -269,13 +269,13 @@ pnpm add uuid @amplitude/analytics-browser recharts
      isLoading: true,
      updatePreferences: async () => {},
    });
-   
+
    export const useAnalytics = () => useContext(AnalyticsContext);
-   
+
    interface AnalyticsProviderProps {
      children: ReactNode;
    }
-   
+
    export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
      const [preferences, setPreferences] = useState<{
        allow_usage_tracking: boolean;
@@ -283,13 +283,13 @@ pnpm add uuid @amplitude/analytics-browser recharts
        anonymize_data: boolean;
      } | null>(null);
      const [isLoading, setIsLoading] = useState(true);
-     
+
      useEffect(() => {
        // Initialize analytics
        if (process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY) {
          initializeAnalytics(process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY);
        }
-       
+
        // Load user preferences
        const loadPreferences = async () => {
          try {
@@ -301,29 +301,29 @@ pnpm add uuid @amplitude/analytics-browser recharts
            setIsLoading(false);
          }
        };
-       
+
        loadPreferences();
      }, []);
-     
+
      // Track page views
      useEffect(() => {
        if (!isLoading && preferences?.allow_usage_tracking && typeof window !== 'undefined') {
          const handleRouteChange = (url: string) => {
            trackPageView(url);
          };
-         
+
          // Track initial page view
          trackPageView(window.location.pathname);
-         
+
          // Set up route change tracking
          window.addEventListener('popstate', () => handleRouteChange(window.location.pathname));
-         
+
          return () => {
            window.removeEventListener('popstate', () => handleRouteChange(window.location.pathname));
          };
        }
      }, [isLoading, preferences]);
-     
+
      // Update preferences
      const updatePreferences = async (prefs: Partial<{
        allow_usage_tracking: boolean;
@@ -335,13 +335,13 @@ pnpm add uuid @amplitude/analytics-browser recharts
            process.env.NEXT_PUBLIC_SUPABASE_URL!,
            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
          );
-         
+
          const { data: { user } } = await supabase.auth.getUser();
-         
+
          if (!user) {
            throw new Error('User not authenticated');
          }
-         
+
          const { data, error } = await supabase
            .from('analytics_preferences')
            .update({
@@ -351,18 +351,18 @@ pnpm add uuid @amplitude/analytics-browser recharts
            .eq('user_id', user.id)
            .select()
            .single();
-         
+
          if (error) {
            throw error;
          }
-         
+
          setPreferences(data);
        } catch (error) {
          console.error('Error updating analytics preferences:', error);
          throw error;
        }
      };
-     
+
      return (
        <AnalyticsContext.Provider
          value={{
@@ -383,30 +383,30 @@ pnpm add uuid @amplitude/analytics-browser recharts
    ```typescript
    // apps/web/app/admin/analytics/page.tsx
    'use client';
-   
+
    import { useState, useEffect } from 'react';
    import { createPublicClient } from '@supa/supabase';
    import {
      LineChart, Line, BarChart, Bar, PieChart, Pie,
      XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
    } from 'recharts';
-   
+
    export default function AnalyticsDashboard() {
      const [timeframe, setTimeframe] = useState('7d');
      const [eventCounts, setEventCounts] = useState([]);
      const [pageViews, setPageViews] = useState([]);
      const [userActivity, setUserActivity] = useState([]);
      const [isLoading, setIsLoading] = useState(true);
-     
+
      useEffect(() => {
        const fetchAnalytics = async () => {
          setIsLoading(true);
          const supabase = createPublicClient();
-         
+
          // Calculate date range based on timeframe
          const now = new Date();
          let startDate = new Date();
-         
+
          switch (timeframe) {
            case '24h':
              startDate.setDate(now.getDate() - 1);
@@ -421,25 +421,25 @@ pnpm add uuid @amplitude/analytics-browser recharts
              startDate.setDate(now.getDate() - 90);
              break;
          }
-         
+
          // Fetch event counts
          const { data: events } = await supabase
            .from('analytics_events')
            .select('event_name, created_at')
            .gte('created_at', startDate.toISOString())
            .order('created_at', { ascending: true });
-         
+
          // Process event counts
          const eventsByName = events?.reduce((acc, event) => {
            acc[event.event_name] = (acc[event.event_name] || 0) + 1;
            return acc;
          }, {});
-         
+
          setEventCounts(Object.entries(eventsByName || {}).map(([name, count]) => ({
            name,
            count,
          })));
-         
+
          // Fetch page views
          const { data: views } = await supabase
            .from('analytics_events')
@@ -447,58 +447,58 @@ pnpm add uuid @amplitude/analytics-browser recharts
            .eq('event_name', 'page_view')
            .gte('created_at', startDate.toISOString())
            .order('created_at', { ascending: true });
-         
+
          // Process page views
          const pageViewsByPath = views?.reduce((acc, view) => {
            const path = view.event_properties.page_name || 'unknown';
            acc[path] = (acc[path] || 0) + 1;
            return acc;
          }, {});
-         
+
          setPageViews(Object.entries(pageViewsByPath || {}).map(([path, count]) => ({
            path,
            count,
          })));
-         
+
          // Fetch user activity
          const { data: activity } = await supabase
            .from('analytics_events')
            .select('user_id, created_at')
            .not('user_id', 'is', null)
            .gte('created_at', startDate.toISOString());
-         
+
          // Process user activity
          const userActivityByDate = activity?.reduce((acc, event) => {
            const date = new Date(event.created_at).toLocaleDateString();
-           
+
            if (!acc[date]) {
              acc[date] = new Set();
            }
-           
+
            acc[date].add(event.user_id);
            return acc;
          }, {});
-         
+
          const userActivityData = Object.entries(userActivityByDate || {}).map(([date, users]) => ({
            date,
            users: (users as Set<string>).size,
          }));
-         
+
          setUserActivity(userActivityData);
          setIsLoading(false);
        };
-       
+
        fetchAnalytics();
      }, [timeframe]);
-     
+
      if (isLoading) {
        return <div>Loading analytics data...</div>;
      }
-     
+
      return (
        <div className="analytics-dashboard">
          <h1>Analytics Dashboard</h1>
-         
+
          <div className="timeframe-selector">
            <button
              className={timeframe === '24h' ? 'active' : ''}
@@ -525,7 +525,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
              Last 90 Days
            </button>
          </div>
-         
+
          <div className="analytics-grid">
            <div className="chart-container">
              <h2>Event Counts</h2>
@@ -540,7 +540,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
                </BarChart>
              </ResponsiveContainer>
            </div>
-           
+
            <div className="chart-container">
              <h2>Page Views</h2>
              <ResponsiveContainer width="100%" height={300}>
@@ -560,7 +560,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
                </PieChart>
              </ResponsiveContainer>
            </div>
-           
+
            <div className="chart-container">
              <h2>Daily Active Users</h2>
              <ResponsiveContainer width="100%" height={300}>
@@ -584,10 +584,10 @@ pnpm add uuid @amplitude/analytics-browser recharts
    ```typescript
    // packages/ui/src/analytics/PrivacySettings.tsx
    'use client';
-   
+
    import { useState } from 'react';
    import { useAnalytics } from '@supa/shared';
-   
+
    export function PrivacySettings() {
      const { preferences, updatePreferences, isLoading } = useAnalytics();
      const [isSaving, setIsSaving] = useState(false);
@@ -596,7 +596,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
        allow_error_reporting: preferences?.allow_error_reporting || false,
        anonymize_data: preferences?.anonymize_data || false,
      });
-     
+
      const handleChange = (e) => {
        const { name, checked } = e.target;
        setFormValues((prev) => ({
@@ -604,11 +604,11 @@ pnpm add uuid @amplitude/analytics-browser recharts
          [name]: checked,
        }));
      };
-     
+
      const handleSubmit = async (e) => {
        e.preventDefault();
        setIsSaving(true);
-       
+
        try {
          await updatePreferences(formValues);
        } catch (error) {
@@ -617,18 +617,18 @@ pnpm add uuid @amplitude/analytics-browser recharts
          setIsSaving(false);
        }
      };
-     
+
      if (isLoading) {
        return <div>Loading privacy settings...</div>;
      }
-     
+
      return (
        <div className="privacy-settings">
          <h2>Privacy Settings</h2>
          <p>
            Control how your data is collected and used within the application.
          </p>
-         
+
          <form onSubmit={handleSubmit}>
            <div className="form-group">
              <label>
@@ -644,7 +644,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
                We collect anonymous usage data to improve the application experience.
              </p>
            </div>
-           
+
            <div className="form-group">
              <label>
                <input
@@ -659,7 +659,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
                We collect error information to fix bugs and improve stability.
              </p>
            </div>
-           
+
            <div className="form-group">
              <label>
                <input
@@ -674,7 +674,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
                Remove personally identifiable information from collected data.
              </p>
            </div>
-           
+
            <button type="submit" disabled={isSaving}>
              {isSaving ? 'Saving...' : 'Save Settings'}
            </button>
@@ -688,7 +688,7 @@ pnpm add uuid @amplitude/analytics-browser recharts
    ```typescript
    // apps/web/app/layout.tsx
    import { AnalyticsProvider } from '@supa/shared';
-   
+
    export default function RootLayout({ children }) {
      return (
        <html lang="en">
@@ -706,12 +706,12 @@ pnpm add uuid @amplitude/analytics-browser recharts
    ```typescript
    // apps/web/app/app/profile/page.tsx
    import { PrivacySettings } from '@supa/ui';
-   
+
    export default function ProfilePage() {
      return (
        <div className="profile-page">
          {/* Other profile components */}
-         
+
          <section className="privacy-section">
            <PrivacySettings />
          </section>

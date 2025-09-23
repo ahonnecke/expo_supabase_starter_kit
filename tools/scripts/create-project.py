@@ -11,14 +11,12 @@ It uses the Supabase CLI directly and fails fast if any step fails.
 import argparse
 import json
 import os
-import random
 import re
 import secrets
 import string
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple
 
 # ANSI color codes for terminal output
 COLORS = {
@@ -192,7 +190,9 @@ def create_project(project_name: str, org_id: str, region: str) -> Tuple[str, st
             capture_output=False,  # Show output in real-time
         )
     except Exception as e:
-        error(f"Failed to create project: {e}\nPlease check your organization ID and permissions.")
+        error(
+            f"Failed to create project: {e}\nPlease check your organization ID and permissions."
+        )
 
     # Get project ID
     project_id = get_project_id(project_name)

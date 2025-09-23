@@ -65,7 +65,7 @@ def run_command(
 def check_supabase_login() -> bool:
     """Check if the user is logged in to Supabase CLI."""
     log("Checking Supabase login status...")
-    
+
     # Try to list projects as a login test
     result = run_command(["npx", "supabase", "projects", "list"], check=False)
     return result.returncode == 0
@@ -118,7 +118,7 @@ def link_project(project_id: str, db_password: str) -> None:
         check=True,
         capture_output=False,
     )
-    
+
     log("Successfully linked to project!")
 
 

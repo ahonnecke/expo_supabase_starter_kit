@@ -15,15 +15,13 @@ It handles:
 import argparse
 import json
 import os
-import random
 import re
 import secrets
 import string
 import subprocess
 import sys
 import time
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 # ANSI color codes for terminal output
 COLORS = {

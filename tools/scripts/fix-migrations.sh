@@ -24,23 +24,23 @@ LOCAL_MIGRATIONS=$(echo "$MIGRATIONS_OUTPUT" | grep -E "^\s*[0-9]+" | awk '{prin
 # Check if we have any migrations to fix
 if [ -z "$LOCAL_MIGRATIONS" ]; then
   echo -e "${RED}No migrations found in the output. Trying direct file listing...${NC}"
-  
+
   # Try to get migrations directly from the files
   MIGRATION_FILES=$(ls -1 supabase/migrations/*.sql 2>/dev/null | sort)
-  
+
   if [ -z "$MIGRATION_FILES" ]; then
     echo -e "${RED}No migration files found in supabase/migrations/. Make sure you are in the correct directory.${NC}"
     exit 1
   fi
-  
+
   echo -e "${GREEN}Found migration files:${NC}"
   echo "$MIGRATION_FILES"
-  
+
   # Extract migration numbers from filenames
   for FILE in $MIGRATION_FILES; do
     FILENAME=$(basename "$FILE")
     MIGRATION_NUMBER=$(echo "$FILENAME" | grep -oE '^[0-9]+' | head -1)
-    
+
     if [ ! -z "$MIGRATION_NUMBER" ]; then
       echo -e "${YELLOW}Repairing migration $MIGRATION_NUMBER from file $FILENAME...${NC}"
       npx supabase migration repair --status applied "$MIGRATION_NUMBER"

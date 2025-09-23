@@ -14,7 +14,6 @@ services:
     command: ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]
     networks:
       - rentinity-dev
-
   # Contract deployment service
   contract-deployer:
     build:
@@ -28,15 +27,9 @@ services:
       - /app/node_modules
     depends_on:
       - hardhat-node
-    command:
-      [
-        "sh",
-        "-c",
-        "sleep 10 && npx hardhat run scripts/deploy.ts --network localhost",
-      ]
+    command: ["sh", "-c", "sleep 10 && npx hardhat run scripts/deploy.ts --network localhost"]
     networks:
       - rentinity-dev
-
   # PostgreSQL for local Supabase
   postgres:
     image: postgres:15
@@ -50,7 +43,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - rentinity-dev
-
   # Redis for caching (optional)
   redis:
     image: redis:7-alpine
@@ -58,10 +50,8 @@ services:
       - "6379:6379"
     networks:
       - rentinity-dev
-
 volumes:
   postgres_data:
-
 networks:
   rentinity-dev:
     driver: bridge

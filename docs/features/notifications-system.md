@@ -120,7 +120,7 @@ const smtp = new SMTPClient({
 serve(async (req) => {
   try {
     const { method, body } = req;
-    
+
     // Only allow POST requests
     if (method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -128,9 +128,9 @@ serve(async (req) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     const { type, userId, data = {}, overrideChannels } = await req.json();
-    
+
     // Validate required fields
     if (!type || !userId) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -138,28 +138,28 @@ serve(async (req) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     // Get notification template
     const { data: template, error: templateError } = await supabase
       .from('notification_templates')
       .select('*')
       .eq('type', type)
       .single();
-    
+
     if (templateError || !template) {
       return new Response(JSON.stringify({ error: 'Template not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     // Get user notification preferences
     const { data: preferences, error: preferencesError } = await supabase
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userId)
       .single();
-    
+
     // If no preferences found, create default preferences
     let userPreferences = preferences;
     if (preferencesError) {
@@ -173,20 +173,20 @@ serve(async (req) => {
         })
         .select()
         .single();
-      
+
       userPreferences = newPreferences;
     }
-    
+
     // Compile templates
     const titleTemplate = Handlebars.compile(template.title_template);
     const bodyTemplate = Handlebars.compile(template.body_template);
-    
+
     const title = titleTemplate(data);
     const body = bodyTemplate(data);
-    
+
     // Determine channels to send notification
     const channels = overrideChannels || template.channels;
-    
+
     // Create in-app notification
     if (channels.includes('in_app') && userPreferences.in_app_enabled) {
       await supabase
@@ -199,12 +199,12 @@ serve(async (req) => {
           data,
         });
     }
-    
+
     // Send email notification
     if (channels.includes('email') && userPreferences.email_enabled) {
       // Get user email
       const { data: user } = await supabase.auth.admin.getUserById(userId);
-      
+
       if (user?.email) {
         await smtp.send({
           from: Deno.env.get('EMAIL_FROM') ?? 'notifications@example.com',
@@ -214,7 +214,7 @@ serve(async (req) => {
         });
       }
     }
-    
+
     // For push notifications, we store a record that the mobile app will poll
     if (channels.includes('push') && userPreferences.push_enabled) {
       await supabase
@@ -227,7 +227,7 @@ serve(async (req) => {
           data: { ...data, _push_notification: true },
         });
     }
-    
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -258,7 +258,7 @@ export const sendNotification = async (
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { error } = await supabase.functions.invoke('notify', {
       body: {
         type,
@@ -267,9 +267,9 @@ export const sendNotification = async (
         overrideChannels,
       },
     });
-    
+
     if (error) throw error;
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error sending notification:', error);
@@ -284,22 +284,22 @@ export const getUserNotifications = async (limit = 20, offset = 0) => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
-    
+
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
-    
+
     if (error) throw error;
-    
+
     return data || [];
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -314,14 +314,14 @@ export const markNotificationAsRead = async (notificationId: string) => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })
       .eq('id', notificationId);
-    
+
     if (error) throw error;
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error marking notification as read:', error);
@@ -336,19 +336,19 @@ export const getNotificationPreferences = async () => {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
-    
+
     const { data, error } = await supabase
       .from('notification_preferences')
       .select('*')
       .eq('user_id', user.id)
       .single();
-    
+
     if (error) {
       // Create default preferences if not found
       const { data: newPrefs } = await supabase
@@ -361,10 +361,10 @@ export const getNotificationPreferences = async () => {
         })
         .select()
         .single();
-      
+
       return newPrefs;
     }
-    
+
     return data;
   } catch (error) {
     console.error('Error fetching notification preferences:', error);
@@ -384,13 +384,13 @@ export const updateNotificationPreferences = async (preferences: {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    
+
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       throw new Error('User not authenticated');
     }
-    
+
     const { data, error } = await supabase
       .from('notification_preferences')
       .update({
@@ -399,9 +399,9 @@ export const updateNotificationPreferences = async (preferences: {
       })
       .eq('user_id', user.id)
       .select();
-    
+
     if (error) throw error;
-    
+
     return data;
   } catch (error) {
     console.error('Error updating notification preferences:', error);
@@ -422,7 +422,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  
+
   useEffect(() => {
     // Load notifications
     const loadNotifications = async () => {
@@ -434,23 +434,23 @@ export function NotificationBell() {
         console.error('Error loading notifications:', error);
       }
     };
-    
+
     loadNotifications();
-    
+
     // Set up polling for new notifications
     const interval = setInterval(loadNotifications, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   const handleNotificationClick = async (notification) => {
     if (!notification.is_read) {
       try {
         await markNotificationAsRead(notification.id);
-        
+
         // Update local state
-        setNotifications(prev => 
-          prev.map(n => 
+        setNotifications(prev =>
+          prev.map(n =>
             n.id === notification.id ? { ...n, is_read: true } : n
           )
         );
@@ -459,16 +459,16 @@ export function NotificationBell() {
         console.error('Error marking notification as read:', error);
       }
     }
-    
+
     // Handle navigation or action based on notification type
     if (notification.data.url) {
       window.location.href = notification.data.url;
     }
   };
-  
+
   return (
     <div className="notification-bell">
-      <button 
+      <button
         className="bell-button"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -477,13 +477,13 @@ export function NotificationBell() {
           <span className="unread-badge">{unreadCount}</span>
         )}
       </button>
-      
+
       {isOpen && (
         <div className="notification-dropdown">
           <div className="notification-header">
             <h3>Notifications</h3>
             {unreadCount > 0 && (
-              <button 
+              <button
                 className="mark-all-read"
                 onClick={async () => {
                   // Mark all as read
@@ -491,9 +491,9 @@ export function NotificationBell() {
                     for (const notification of notifications.filter(n => !n.is_read)) {
                       await markNotificationAsRead(notification.id);
                     }
-                    
+
                     // Update local state
-                    setNotifications(prev => 
+                    setNotifications(prev =>
                       prev.map(n => ({ ...n, is_read: true }))
                     );
                     setUnreadCount(0);
@@ -506,7 +506,7 @@ export function NotificationBell() {
               </button>
             )}
           </div>
-          
+
           <div className="notification-list">
             {notifications.length === 0 ? (
               <div className="empty-state">
@@ -514,7 +514,7 @@ export function NotificationBell() {
               </div>
             ) : (
               notifications.map(notification => (
-                <div 
+                <div
                   key={notification.id}
                   className={`notification-item ${notification.is_read ? '' : 'unread'}`}
                   onClick={() => handleNotificationClick(notification)}
@@ -528,7 +528,7 @@ export function NotificationBell() {
               ))
             )}
           </div>
-          
+
           <div className="notification-footer">
             <a href="/app/notifications">View all notifications</a>
           </div>
@@ -551,7 +551,7 @@ export function NotificationPreferences() {
   const [preferences, setPreferences] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   useEffect(() => {
     async function loadPreferences() {
       try {
@@ -563,20 +563,20 @@ export function NotificationPreferences() {
         setIsLoading(false);
       }
     }
-    
+
     loadPreferences();
   }, []);
-  
+
   const handleToggle = (key) => {
     setPreferences(prev => ({
       ...prev,
       [key]: !prev[key],
     }));
   };
-  
+
   const handleSave = async () => {
     setIsSaving(true);
-    
+
     try {
       await updateNotificationPreferences({
         email_enabled: preferences.email_enabled,
@@ -590,18 +590,18 @@ export function NotificationPreferences() {
       setIsSaving(false);
     }
   };
-  
+
   if (isLoading) {
     return <div>Loading notification preferences...</div>;
   }
-  
+
   return (
     <div className="notification-preferences">
       <h2>Notification Preferences</h2>
-      
+
       <div className="preferences-section">
         <h3>Notification Channels</h3>
-        
+
         <div className="preference-item">
           <label>
             <input
@@ -612,7 +612,7 @@ export function NotificationPreferences() {
             In-app notifications
           </label>
         </div>
-        
+
         <div className="preference-item">
           <label>
             <input
@@ -623,7 +623,7 @@ export function NotificationPreferences() {
             Email notifications
           </label>
         </div>
-        
+
         <div className="preference-item">
           <label>
             <input
@@ -635,8 +635,8 @@ export function NotificationPreferences() {
           </label>
         </div>
       </div>
-      
-      <button 
+
+      <button
         className="save-button"
         onClick={handleSave}
         disabled={isSaving}
@@ -671,23 +671,23 @@ export async function registerForPushNotifications() {
     // Check permissions
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
-    
+
     // Request permissions if not granted
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
     }
-    
+
     if (finalStatus !== 'granted') {
       return false;
     }
-    
+
     // Get push token
     const token = (await Notifications.getExpoPushTokenAsync()).data;
-    
+
     // Store token in AsyncStorage
     await AsyncStorage.setItem('pushToken', token);
-    
+
     // Configure for Android
     if (Platform.OS === 'android') {
       Notifications.setNotificationChannelAsync('default', {
@@ -697,7 +697,7 @@ export async function registerForPushNotifications() {
         lightColor: '#FF231F7C',
       });
     }
-    
+
     return token;
   } catch (error) {
     console.error('Error registering for push notifications:', error);
@@ -715,7 +715,7 @@ export function setupNotificationListener(onNotification) {
 export async function pollForPushNotifications(supabaseUrl, supabaseKey, userId) {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
+
     // Get unread push notifications
     const { data, error } = await supabase
       .from('notifications')
@@ -723,9 +723,9 @@ export async function pollForPushNotifications(supabaseUrl, supabaseKey, userId)
       .eq('user_id', userId)
       .eq('is_read', false)
       .filter('data->_push_notification', 'eq', true);
-    
+
     if (error) throw error;
-    
+
     // Schedule local notifications for each push notification
     if (data && data.length > 0) {
       for (const notification of data) {
@@ -737,7 +737,7 @@ export async function pollForPushNotifications(supabaseUrl, supabaseKey, userId)
           },
           trigger: null, // Show immediately
         });
-        
+
         // Mark as read
         await supabase
           .from('notifications')
@@ -763,7 +763,7 @@ export default function NotificationTemplates() {
   const [templates, setTemplates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTemplate, setCurrentTemplate] = useState(null);
-  
+
   useEffect(() => {
     async function loadTemplates() {
       try {
@@ -772,9 +772,9 @@ export default function NotificationTemplates() {
           .from('notification_templates')
           .select('*')
           .order('type');
-        
+
         if (error) throw error;
-        
+
         setTemplates(data || []);
       } catch (error) {
         console.error('Error loading templates:', error);
@@ -782,14 +782,14 @@ export default function NotificationTemplates() {
         setIsLoading(false);
       }
     }
-    
+
     loadTemplates();
   }, []);
-  
+
   const handleSaveTemplate = async () => {
     try {
       const supabase = createPublicClient();
-      
+
       const { error } = await supabase
         .from('notification_templates')
         .upsert({
@@ -798,33 +798,33 @@ export default function NotificationTemplates() {
         }, {
           onConflict: 'type',
         });
-      
+
       if (error) throw error;
-      
+
       // Refresh templates
       const { data } = await supabase
         .from('notification_templates')
         .select('*')
         .order('type');
-      
+
       setTemplates(data || []);
       setCurrentTemplate(null);
     } catch (error) {
       console.error('Error saving template:', error);
     }
   };
-  
+
   if (isLoading) {
     return <div>Loading notification templates...</div>;
   }
-  
+
   return (
     <div className="notification-templates">
       <h1>Notification Templates</h1>
-      
+
       <div className="templates-grid">
         <div className="templates-list">
-          <button 
+          <button
             className="new-template-button"
             onClick={() => setCurrentTemplate({
               type: '',
@@ -836,9 +836,9 @@ export default function NotificationTemplates() {
           >
             New Template
           </button>
-          
+
           {templates.map(template => (
-            <div 
+            <div
               key={template.type}
               className={`template-item ${currentTemplate?.type === template.type ? 'active' : ''}`}
               onClick={() => setCurrentTemplate(template)}
@@ -850,7 +850,7 @@ export default function NotificationTemplates() {
             </div>
           ))}
         </div>
-        
+
         {currentTemplate && (
           <div className="template-editor">
             <div className="form-group">
@@ -864,7 +864,7 @@ export default function NotificationTemplates() {
                 })}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Title Template</label>
               <input
@@ -879,7 +879,7 @@ export default function NotificationTemplates() {
                 Use Handlebars syntax: {{variable_name}}
               </p>
             </div>
-            
+
             <div className="form-group">
               <label>Body Template</label>
               <textarea
@@ -894,7 +894,7 @@ export default function NotificationTemplates() {
                 Use Handlebars syntax: {{variable_name}}
               </p>
             </div>
-            
+
             <div className="form-group">
               <label>Channels</label>
               <div className="checkbox-group">
@@ -922,15 +922,15 @@ export default function NotificationTemplates() {
                 ))}
               </div>
             </div>
-            
+
             <div className="button-group">
-              <button 
+              <button
                 className="cancel-button"
                 onClick={() => setCurrentTemplate(null)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="save-button"
                 onClick={handleSaveTemplate}
               >

@@ -94,13 +94,13 @@ serve(async (req) => {
     if (method === 'POST' && path === 'webhook') {
       const signature = req.headers.get('stripe-signature');
       const body = await req.text();
-      
+
       const event = stripe.webhooks.constructEvent(
         body,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET')
       );
-      
+
       // Handle different event types
       switch (event.type) {
         case 'customer.subscription.created':
@@ -114,17 +114,17 @@ serve(async (req) => {
           await handlePaymentMethodAttached(event.data.object);
           break;
       }
-      
+
       return new Response(JSON.stringify({ received: true }), {
         headers: { 'Content-Type': 'application/json' },
         status: 200,
       });
     }
-    
+
     // Handle client-side requests
     if (method === 'POST') {
       const { action, data } = await req.json();
-      
+
       switch (action) {
         case 'create-checkout-session':
           return await createCheckoutSession(data);
@@ -134,7 +134,7 @@ serve(async (req) => {
           return await getSubscription(data);
       }
     }
-    
+
     return new Response(JSON.stringify({ error: 'Not Found' }), {
       headers: { 'Content-Type': 'application/json' },
       status: 404,
@@ -169,13 +169,13 @@ export const createCheckoutSession = async (priceId) => {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
-  
+
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   if (!session) {
     throw new Error('You must be logged in to checkout');
   }
-  
+
   const { data, error } = await supabase.functions.invoke('payments', {
     body: {
       action: 'create-checkout-session',
@@ -186,7 +186,7 @@ export const createCheckoutSession = async (priceId) => {
       },
     },
   });
-  
+
   if (error) throw error;
   return data;
 };
@@ -197,23 +197,23 @@ export const getUserSubscription = async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
-  
+
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   if (!session) {
     return null;
   }
-  
+
   const { data, error } = await supabase
     .from('subscriptions')
     .select('*')
     .eq('user_id', session.user.id)
     .single();
-  
+
   if (error && error.code !== 'PGRST116') {
     console.error('Error fetching subscription:', error);
   }
-  
+
   return data;
 };
 ```
@@ -228,10 +228,10 @@ import { createCheckoutSession, getUserSubscription } from '@supa/shared';
 
 export function PricingTable({ prices }) {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const handleCheckout = async (priceId) => {
     setIsLoading(true);
-    
+
     try {
       const { sessionId } = await createCheckoutSession(priceId);
       const stripe = await getStripe();
@@ -242,7 +242,7 @@ export function PricingTable({ prices }) {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="pricing-table">
       {prices.map((price) => (
@@ -254,7 +254,7 @@ export function PricingTable({ prices }) {
               <li key={i}>{feature}</li>
             ))}
           </ul>
-          <button 
+          <button
             onClick={() => handleCheckout(price.id)}
             disabled={isLoading}
           >
@@ -279,7 +279,7 @@ import { PricingTable } from '@supa/ui';
 export default function BillingPage() {
   const [subscription, setSubscription] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     async function loadSubscription() {
       try {
@@ -291,10 +291,10 @@ export default function BillingPage() {
         setIsLoading(false);
       }
     }
-    
+
     loadSubscription();
   }, []);
-  
+
   const prices = [
     {
       id: 'price_basic',
@@ -311,22 +311,22 @@ export default function BillingPage() {
       features: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4'],
     },
   ];
-  
+
   if (isLoading) {
     return <div>Loading subscription details...</div>;
   }
-  
+
   return (
     <div className="billing-page">
       <h1>Billing</h1>
-      
+
       {subscription ? (
         <div className="subscription-details">
           <h2>Current Subscription</h2>
           <p>Plan: {subscription.plan_id}</p>
           <p>Status: {subscription.status}</p>
           <p>
-            Current period: {new Date(subscription.current_period_start).toLocaleDateString()} 
+            Current period: {new Date(subscription.current_period_start).toLocaleDateString()}
             to {new Date(subscription.current_period_end).toLocaleDateString()}
           </p>
           <button onClick={handleManageBilling}>Manage Billing</button>

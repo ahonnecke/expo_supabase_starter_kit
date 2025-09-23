@@ -66,22 +66,22 @@ export default async function AdminLayout({ children }) {
   // Check if user is admin
   const supabase = createSSRClient();
   const { data: { session } } = await supabase.auth.getSession();
-  
+
   if (!session) {
     redirect('/sign-in');
   }
-  
+
   // Get user profile to check admin status
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('is_admin')
     .eq('id', session.user.id)
     .single();
-  
+
   if (!profile || !profile.is_admin) {
     redirect('/app'); // Redirect non-admins
   }
-  
+
   // Log admin access
   await supabase
     .from('admin_activity')
@@ -90,7 +90,7 @@ export default async function AdminLayout({ children }) {
       action: 'access',
       entity_type: 'admin_dashboard',
     });
-  
+
   return (
     <div className="admin-layout">
       <AdminSidebar />
@@ -112,27 +112,27 @@ import { QuickActions } from './components/QuickActions';
 
 export default async function AdminDashboard() {
   const supabase = createSSRClient();
-  
+
   // Get high-level stats
   const { data: userCount } = await supabase
     .from('user_profiles')
     .select('id', { count: 'exact', head: true });
-  
+
   const { data: recentActivity } = await supabase
     .from('admin_activity')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(10);
-  
+
   return (
     <div className="admin-dashboard">
       <h1>Admin Dashboard</h1>
-      
-      <AdminStats 
+
+      <AdminStats
         userCount={userCount || 0}
         // Add other stats here
       />
-      
+
       <div className="dashboard-grid">
         <QuickActions />
         <RecentActivity activity={recentActivity || []} />
@@ -150,12 +150,12 @@ import { UserTable } from './components/UserTable';
 
 export default async function AdminUsers() {
   const supabase = createSSRClient();
-  
+
   const { data: users, error } = await supabase
     .from('user_profiles')
     .select('id, first_name, last_name, email:auth.users(email), created_at, is_admin')
     .order('created_at', { ascending: false });
-  
+
   return (
     <div className="admin-users">
       <h1>User Management</h1>
@@ -175,17 +175,17 @@ import { UserForm } from '../components/UserForm';
 export default async function AdminUserDetail({ params }) {
   const { id } = params;
   const supabase = createSSRClient();
-  
+
   const { data: user, error } = await supabase
     .from('user_profiles')
     .select('*, email:auth.users(email)')
     .eq('id', id)
     .single();
-  
+
   if (error || !user) {
     notFound();
   }
-  
+
   return (
     <div className="admin-user-detail">
       <h1>Edit User: {user.first_name} {user.last_name}</h1>
@@ -208,56 +208,56 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const { register, handleSubmit, reset } = useForm();
-  
+
   useEffect(() => {
     async function loadSettings() {
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from('admin_settings')
         .select('*');
-      
+
       if (!error && data) {
         // Transform array to object for easier form handling
         const settingsObj = data.reduce((acc, setting) => {
           acc[setting.key] = setting.value;
           return acc;
         }, {});
-        
+
         setSettings(settingsObj);
         reset(settingsObj);
       }
-      
+
       setIsLoading(false);
     }
-    
+
     loadSettings();
   }, [reset]);
-  
+
   const onSubmit = async (data) => {
     const supabase = createPublicClient();
-    
+
     // Convert form data to array of settings
     const updates = Object.entries(data).map(([key, value]) => ({
       key,
       value,
     }));
-    
+
     // Update settings
     for (const setting of updates) {
       await supabase
         .from('admin_settings')
         .upsert(setting, { onConflict: 'key' });
     }
-    
+
     alert('Settings updated successfully');
   };
-  
+
   if (isLoading) return <div>Loading settings...</div>;
-  
+
   return (
     <div className="admin-settings">
       <h1>Application Settings</h1>
-      
+
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Render form fields dynamically based on settings */}
         {Object.entries(settings).map(([key, value]) => (
@@ -271,7 +271,7 @@ export default function AdminSettings() {
             />
           </div>
         ))}
-        
+
         <button type="submit">Save Settings</button>
       </form>
     </div>
@@ -291,13 +291,13 @@ export function AdminSidebar() {
     { label: 'Feedback', href: '/admin/feedback', icon: 'feedback' },
     { label: 'Settings', href: '/admin/settings', icon: 'settings' },
   ];
-  
+
   return (
     <aside className="admin-sidebar">
       <div className="admin-sidebar-header">
         <h2>Admin</h2>
       </div>
-      
+
       <nav className="admin-nav">
         <ul>
           {menuItems.map((item) => (
@@ -310,7 +310,7 @@ export function AdminSidebar() {
           ))}
         </ul>
       </nav>
-      
+
       <div className="admin-sidebar-footer">
         <Link href="/app">
           Exit Admin
@@ -333,30 +333,30 @@ export const config = {
 
 export async function middleware(request) {
   // ... existing auth checks
-  
+
   // Additional check for admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     const supabase = createServerClient(
       // ... your existing config
     );
-    
+
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
-    
+
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('is_admin')
       .eq('id', session.user.id)
       .single();
-    
+
     if (!profile || !profile.is_admin) {
       return NextResponse.redirect(new URL('/app', request.url));
     }
   }
-  
+
   return NextResponse.next();
 }
 ```

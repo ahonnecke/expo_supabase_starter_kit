@@ -4,16 +4,18 @@
 export const dynamic = "force-dynamic";
 
 import { createPublicClient } from "@supa/supabase/src/client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function SignIn() {
 	const router = useRouter();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [authMethod, setAuthMethod] = useState<"password" | "magic-link">("password");
+	const [authMethod, setAuthMethod] = useState<"password" | "magic-link">(
+		"password",
+	);
 	const [sent, setSent] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function SignIn() {
 					password,
 				});
 				if (error) throw error;
-				
+
 				// Redirect to profile page on successful sign in
 				if (data?.user) {
 					// Type assertion for router to avoid TypeScript errors
@@ -91,7 +93,7 @@ export default function SignIn() {
 			backgroundColor: "#0070f3",
 			color: "white",
 			borderColor: "#0070f3",
-		}
+		},
 	};
 
 	return (
@@ -99,20 +101,20 @@ export default function SignIn() {
 			<h1>Sign in</h1>
 
 			<div style={{ marginBottom: "20px" }}>
-				<button 
-					onClick={() => setAuthMethod("password")} 
+				<button
+					onClick={() => setAuthMethod("password")}
 					style={{
 						...formStyles.tabButton,
-						...(authMethod === "password" ? formStyles.activeTab : {})
+						...(authMethod === "password" ? formStyles.activeTab : {}),
 					}}
 				>
 					Password
 				</button>
-				<button 
-					onClick={() => setAuthMethod("magic-link")} 
+				<button
+					onClick={() => setAuthMethod("magic-link")}
 					style={{
 						...formStyles.tabButton,
-						...(authMethod === "magic-link" ? formStyles.activeTab : {})
+						...(authMethod === "magic-link" ? formStyles.activeTab : {}),
 					}}
 				>
 					Magic Link
@@ -151,13 +153,12 @@ export default function SignIn() {
 						</div>
 					)}
 
-					<button 
-						type="submit" 
-						style={formStyles.button}
-						disabled={loading}
-					>
-						{loading ? "Signing in..." : 
-						 authMethod === "magic-link" ? "Send magic link" : "Sign in"}
+					<button type="submit" style={formStyles.button} disabled={loading}>
+						{loading
+							? "Signing in..."
+							: authMethod === "magic-link"
+								? "Send magic link"
+								: "Sign in"}
 					</button>
 
 					{error && <p style={{ color: "crimson" }}>{error}</p>}

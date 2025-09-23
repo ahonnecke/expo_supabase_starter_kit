@@ -11,10 +11,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract PropertyTokenFactory is Ownable {
     // Array to store all created property tokens
     address[] public propertyTokens;
-    
+
     // Mapping from property ID to token address
     mapping(string => address) public propertyIdToToken;
-    
+
     // Events
     event PropertyTokenCreated(
         string indexed propertyId,
@@ -24,13 +24,13 @@ contract PropertyTokenFactory is Ownable {
         uint256 annualYieldPercent,
         uint256 totalSupply
     );
-    
+
     /**
      * @dev Constructor
      * @param initialOwner The address that will own and control this contract
      */
     constructor(address initialOwner) Ownable(initialOwner) {}
-    
+
     /**
      * @dev Create a new property token
      * @param propertyId Unique identifier for the property (e.g. database ID)
@@ -57,7 +57,7 @@ contract PropertyTokenFactory is Ownable {
     ) external onlyOwner returns (address) {
         // Check if property ID already exists
         require(propertyIdToToken[propertyId] == address(0), "PropertyTokenFactory: property ID already exists");
-        
+
         // Create new property token with factory as initial owner
         PropertyToken newToken = new PropertyToken(
             address(this),
@@ -68,20 +68,20 @@ contract PropertyTokenFactory is Ownable {
             annualYieldPercent,
             lockupPeriodDays
         );
-        
+
         // Mint initial supply to the specified address
         if (totalSupply > 0 && initialHolder != address(0)) {
             newToken.mint(initialHolder, totalSupply);
         }
-        
+
         // Transfer ownership to the factory owner
         newToken.transferOwnership(owner());
-        
+
         // Store token address
         address tokenAddress = address(newToken);
         propertyTokens.push(tokenAddress);
         propertyIdToToken[propertyId] = tokenAddress;
-        
+
         // Emit event
         emit PropertyTokenCreated(
             propertyId,
@@ -91,10 +91,10 @@ contract PropertyTokenFactory is Ownable {
             annualYieldPercent,
             totalSupply
         );
-        
+
         return tokenAddress;
     }
-    
+
     /**
      * @dev Get the number of property tokens created
      * @return The number of property tokens
@@ -102,7 +102,7 @@ contract PropertyTokenFactory is Ownable {
     function getPropertyTokenCount() external view returns (uint256) {
         return propertyTokens.length;
     }
-    
+
     /**
      * @dev Get property token by index
      * @param index The index of the property token
@@ -112,7 +112,7 @@ contract PropertyTokenFactory is Ownable {
         require(index < propertyTokens.length, "PropertyTokenFactory: index out of bounds");
         return propertyTokens[index];
     }
-    
+
     /**
      * @dev Get property token by property ID
      * @param propertyId The property ID
