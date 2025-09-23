@@ -29,8 +29,7 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-RUN pnpm --filter "@rentinity/blockchain" build
-RUN pnpm --filter web build
+RUN pnpm build
 
 # ---- runner ----
 FROM node:20-bookworm-slim AS runner
