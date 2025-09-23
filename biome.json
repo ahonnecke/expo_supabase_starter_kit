@@ -1,0 +1,90 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.2/schema.json",
+  "vcs": {
+    "enabled": false,
+    "clientKind": "git",
+    "useIgnoreFile": false
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "ignore": [
+      "*.d.ts",
+      "*.js",
+      "*.md",
+      "*API.ts",
+      "*mutations.ts",
+      "*queries.ts",
+      "*subscriptions.ts",
+      "public/",
+      "src/assets/",
+      "**/coverage/**",
+      "**/amplify_outputs.json",
+      "**/API.ts",
+      "**/mutations.ts",
+      "**/queries.ts",
+      "**/subscriptions.ts",
+      "**/.aws-sam/**",
+      "**/.amplify/**",
+      "**/.mypy_cache/**",
+      "**/*.js",
+      ".venv/*",
+      "**/*.d.ts",
+      "**/build/**",
+      "*.md",
+      "*.yaml",
+      "*.py",
+      "*.sh",
+      "dist/**/*",
+      "*.map",
+      "ocpp-server/src/types/ocpp.ts"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noChildrenProp": "off",
+        "useExhaustiveDependencies": "off",
+        "noUnreachable": "off"
+      },
+      "complexity": {
+        "noForEach": "off"
+      },
+      "performance": { "noAccumulatingSpread": "off" },
+      "suspicious": {
+        "noImplicitAnyLet": "off",
+        "noArrayIndexKey": "off",
+        "noExplicitAny": "off"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "formatWithErrors": true,
+    "ignore": [
+      "*.js",
+      "*.d.ts",
+      "*.md",
+      "**/package-lock.json",
+      "ocpp-server/src/ocpp/config-files/**"
+    ]
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "double",
+      "trailingCommas": "none"
+    }
+  }
+}

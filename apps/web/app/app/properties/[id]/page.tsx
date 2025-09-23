@@ -143,9 +143,9 @@ function PropertyDetailContent({ id }: { id: string }) {
 			const supabase = createPublicClient();
 			const sharePrice = property.price / property.total_shares;
 
-			// Create transaction record
-			const { error: transactionError } = await supabase
-				.from("transactions")
+			// Create transaction request record
+			const { error: requestError } = await supabase
+				.from("transaction_requests")
 				.insert({
 					user_id: user.id,
 					property_id: property.id,
@@ -156,48 +156,24 @@ function PropertyDetailContent({ id }: { id: string }) {
 					metadata: {
 						share_price: sharePrice,
 						initiated_at: new Date().toISOString(),
+						current_ownership: ownership
+							? {
+									id: ownership.id,
+									shares_owned: ownership.shares_owned,
+									purchase_price_per_share: ownership.purchase_price_per_share,
+								}
+							: null,
 					},
 				});
 
-			if (transactionError) throw transactionError;
+			if (requestError) throw requestError;
 
-			// Update or create ownership record
-			if (ownership) {
-				// Update existing ownership
-				const { error: updateError } = await supabase
-					.from("ownership_ledger")
-					.update({
-						shares_owned: ownership.shares_owned + investShares,
-						purchase_price_per_share:
-							(ownership.purchase_price_per_share + sharePrice) / 2, // Average price
-						updated_at: new Date().toISOString(),
-					})
-					.eq("id", ownership.id);
-
-				if (updateError) throw updateError;
-			} else {
-				// Create new ownership record
-				const { error: createError } = await supabase
-					.from("ownership_ledger")
-					.insert({
-						user_id: user.id,
-						property_id: property.id,
-						shares_owned: investShares,
-						purchase_price_per_share: sharePrice,
-						lockup_end_date: new Date(
-							Date.now() + 60 * 24 * 60 * 60 * 1000,
-						).toISOString(), // 60 days from now
-					});
-
-				if (createError) throw createError;
-			}
-
-			// Redirect to success page
+			// Redirect to pending page
 			router.push(
-				`/app/properties/${property.id}/success?amount=${investAmount}&shares=${investShares}`,
+				`/app/properties/${property.id}/pending?amount=${investAmount}&shares=${investShares}`,
 			);
 		} catch (err: any) {
-			setError(err.message || "Failed to process investment");
+			setError(err.message || "Failed to process investment request");
 		} finally {
 			setIsInvesting(false);
 		}
@@ -536,7 +512,7 @@ function PropertyDetailContent({ id }: { id: string }) {
 								}}
 								disabled={isInvesting || !isKycVerified || investShares <= 0}
 							>
-								{isInvesting ? "Processing..." : "Invest Now"}
+								{isInvesting ? "Processing..." : "Request Investment"}
 							</button>
 
 							{error && <p style={styles.error}>{error}</p>}
