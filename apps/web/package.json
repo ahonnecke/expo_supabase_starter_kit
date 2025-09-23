@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node -e \"try { require('fs').accessSync('../../scripts/link-packages.sh', require('fs').constants.X_OK); require('child_process').execSync('../../scripts/link-packages.sh', {stdio: 'inherit'}); } catch (e) { console.log('Skipping package linking:', e.message); }\";",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json",
@@ -11,6 +12,7 @@
     "test": "node -e \"process.exit(0)\""
   },
   "dependencies": {
+    "@rentinity/blockchain": "workspace:*",
     "@supa/shared": "workspace:*",
     "@supa/supabase": "workspace:*",
     "@supa/ui": "workspace:*",

@@ -14,8 +14,12 @@ pnpm-debug.log*
 # Local env & build
 .env
 .env.*
-dist
-build
 .expo
 android
 ios
+
+# Don't exclude dist from packages
+!packages/*/dist
+
+# Ensure scripts are included
+!scripts/link-packages.sh

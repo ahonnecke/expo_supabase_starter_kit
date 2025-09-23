@@ -9,20 +9,25 @@ RUN corepack enable && apk add --no-cache libc6-compat
 WORKDIR /app
 
 # ---------- Dependencies layer ----------
-# Copy only files needed to resolve workspace deps (best cache hit)
+# First copy only package.json files to leverage Docker caching
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json tsconfig.base.json ./
-# App & packages manifests
-COPY apps/web/package.json apps/web/package.json
-COPY packages/ui/package.json packages/ui/package.json
-COPY packages/shared/package.json packages/shared/package.json
-COPY packages/supabase/package.json packages/supabase/package.json
-COPY packages/blockchain/package.json packages/blockchain/package.json
 
-FROM base AS deps
-RUN pnpm install --frozen-lockfile
+# Create directory structure first
+RUN mkdir -p apps/web packages/ui packages/shared packages/supabase packages/blockchain
+
+# Copy package manifests
+COPY apps/web/package.json apps/web/
+COPY packages/ui/package.json packages/ui/
+COPY packages/shared/package.json packages/shared/
+COPY packages/supabase/package.json packages/supabase/
+COPY packages/blockchain/package.json packages/blockchain/
+
+# Install dependencies
+RUN pnpm install
 
 # ---------- Builder ----------
-FROM deps AS builder
+# Now copy the rest of the source code
+COPY . .
 
 # Required build-time arguments with no defaults
 ARG NEXT_PUBLIC_SUPABASE_URL
@@ -36,20 +41,8 @@ RUN test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || (echo "Error: NEXT_PUBLIC_SUPABA
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# Bring source after deps to maximize cache
-COPY . .
-
-# Build blockchain package first
-RUN pnpm --filter @rentinity/blockchain build
-
-# Create the node_modules structure for the blockchain package in the web app
-RUN mkdir -p /app/apps/web/node_modules/@rentinity/blockchain/dist
-
-# Copy the blockchain package's dist directory to the web app's node_modules
-RUN cp -r /app/packages/blockchain/dist/* /app/apps/web/node_modules/@rentinity/blockchain/dist/
-
-# Copy the package.json to the web app's node_modules
-RUN cp /app/packages/blockchain/package.json /app/apps/web/node_modules/@rentinity/blockchain/
+# Build packages that have build scripts
+RUN pnpm --filter "@rentinity/blockchain" build
 
 # Build the web app (Next.js)
 RUN pnpm --filter web build

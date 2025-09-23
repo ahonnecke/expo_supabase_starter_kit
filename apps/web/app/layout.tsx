@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { AuthProvider } from '@supa/supabase/src/auth-context';
-import { NotificationContainer } from '@rentinity/shared';
+import { NotificationContainer } from '@supa/shared';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
