@@ -1,5 +1,7 @@
+# pnpm-workspace.yaml
 packages:
   - "apps/*"
   - "packages/*"
   - "supabase/functions/*"
-  - ".accelerator"
+  # exclude accelerator templates or any folder that might duplicate names
+  - "!**/.accelerator/**"

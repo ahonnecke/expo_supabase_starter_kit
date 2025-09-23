@@ -11,17 +11,34 @@ RUN corepack enable && corepack prepare pnpm@10.15.0 --activate \
 FROM base AS builder
 WORKDIR /app
 
-# Copy only files needed for dependency resolution/caching
+# Copy root package.json and workspace config first
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-# Copy ALL workspace manifests (match your "workspaces" globs)
-COPY apps/*/package.json ./apps/*/
-COPY packages/*/package.json ./packages/*/
-COPY supabase/functions/*/package.json ./supabase/functions/*/
 
-# Now bring in the source
+# Create directory structure for workspace packages
+RUN mkdir -p apps/web apps/mobile packages/blockchain packages/shared packages/supabase packages/ui supabase/functions/notify supabase/functions/payments
+
+# Copy package.json files for workspace packages
+COPY apps/web/package.json ./apps/web/
+COPY apps/mobile/package.json ./apps/mobile/
+COPY packages/blockchain/package.json ./packages/blockchain/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/supabase/package.json ./packages/supabase/
+
+# Create package.json for UI package if it doesn't exist in the repo
+RUN echo '{"name": "@supa/ui", "version": "1.0.0", "private": true}' > ./packages/ui/package.json
+
+# Create empty package.json files for Supabase functions
+RUN echo '{"name": "notify-function", "version": "1.0.0", "private": true}' > ./supabase/functions/notify/package.json && \
+    echo '{"name": "payments-function", "version": "1.0.0", "private": true}' > ./supabase/functions/payments/package.json
+
+# Install dependencies
+RUN pnpm install
+
+# Now copy the rest of the source code
 COPY . .
 
-RUN pnpm install
+# Make sure scripts are executable
+RUN chmod +x scripts/link-packages.sh
 
 # Build packages and app
 ARG NEXT_PUBLIC_SUPABASE_URL

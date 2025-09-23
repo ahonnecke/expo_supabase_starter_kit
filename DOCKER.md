@@ -109,6 +109,14 @@ Our Docker build process is designed to leverage caching effectively:
 
 ### Common Docker Build Issues
 
+#### Workspace Duplication Errors
+
+If you encounter errors like `Failed to add workspace "web" from "apps/*/package.json", it already exists at "apps/web/package.json":`
+
+1. This is caused by package.json files being copied twice during the Docker build
+2. Our Dockerfile uses selective copying instead of `COPY . .` to prevent this issue
+3. If you modify the Dockerfile, ensure you don't copy the same package.json files multiple times
+
 #### Module Not Found Errors
 
 If you encounter "Module not found" errors:
@@ -136,7 +144,7 @@ If you see errors about missing stage names (like `failed to resolve source meta
 If you see errors about missing environment variables:
 
 1. Ensure your `.env` file exists and contains all required variables
-2. Make sure the variables are passed correctly to Docker with `--build-arg` or through docker-compose
+2. Make sure the variables are passed correctly to Docker with `--build-arg` or through docker compose
 
 ### Performance Tips
 

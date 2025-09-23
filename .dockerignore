@@ -9,7 +9,6 @@ pnpm-debug.log*
 
 # VCS & OS
 .git
-.gitignore
 .DS_Store
 
 # Local env & build
@@ -19,8 +18,12 @@ pnpm-debug.log*
 android
 ios
 
-# Don't exclude dist from packages
+# Don't exclude these important files
 !packages/*/dist
-
-# Ensure scripts are included
+!packages/*/src
+!apps/*/src
+!apps/*/app
+!apps/*/public
 !scripts/link-packages.sh
+!.gitignore
+!.dockerignore
