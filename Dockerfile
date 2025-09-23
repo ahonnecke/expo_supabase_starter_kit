@@ -1,99 +1,43 @@
-# ---------- Base image ----------
-# MAINTAINER Ashton Honnecke <ashton@pixelstub.com>
-FROM node:20-alpine AS base
-ENV PNPM_HOME="/pnpm" \
-    NEXT_TELEMETRY_DISABLED=1
+# ---- base ----
+FROM node:20-bookworm-slim AS base
+ENV PNPM_HOME="/pnpm" NEXT_TELEMETRY_DISABLED=1
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@10.15.0 --activate \
+  && apt-get update && apt-get install -y --no-install-recommends \
+     git python3 make g++ ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
-# ---------- Builder stage ----------
+# ---- builder ----
 FROM base AS builder
+WORKDIR /app
 
-# Create a temporary directory for the build
-WORKDIR /tmp/build
+# Copy only files needed for dependency resolution/caching
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+# Copy ALL workspace manifests (match your "workspaces" globs)
+COPY apps/*/package.json ./apps/*/
+COPY packages/*/package.json ./packages/*/
+COPY supabase/functions/*/package.json ./supabase/functions/*/
 
-# Copy package.json files
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json tsconfig.base.json ./
-COPY apps/web/package.json ./apps/web/
-COPY packages/ui/package.json ./packages/ui/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/supabase/package.json ./packages/supabase/
-COPY packages/blockchain/package.json ./packages/blockchain/
+# Now bring in the source
+COPY . .
 
-# Install dependencies
 RUN pnpm install
 
-# Copy source files
-COPY apps/web/app ./apps/web/app/
-COPY apps/web/public ./apps/web/public/
-COPY apps/web/next.config.mjs ./apps/web/
-COPY apps/web/tsconfig.json ./apps/web/
-
-# Copy blockchain package
-COPY packages/blockchain/src ./packages/blockchain/src/
-COPY packages/blockchain/tsconfig.json ./packages/blockchain/
-
-# Copy shared package
-COPY packages/shared/src ./packages/shared/src/
-COPY packages/shared/index.ts ./packages/shared/
-
-# Copy supabase package
-COPY packages/supabase/src ./packages/supabase/src/
-COPY packages/supabase/client.ts ./packages/supabase/
-
-# Copy UI package
-COPY packages/ui/src ./packages/ui/src/
-COPY packages/ui/tamagui.config.ts ./packages/ui/
-
-# Copy scripts
-COPY scripts ./scripts/
-
-# Required build-time arguments with no defaults
+# Build packages and app
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-# Validate required build args
-RUN test -n "$NEXT_PUBLIC_SUPABASE_URL" || (echo "Error: NEXT_PUBLIC_SUPABASE_URL is required" && exit 1)
-RUN test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || (echo "Error: NEXT_PUBLIC_SUPABASE_ANON_KEY is required" && exit 1)
-
-# Set as environment variables for the build process
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# Build packages that have build scripts
 RUN pnpm --filter "@rentinity/blockchain" build
-
-# Build the web app (Next.js)
 RUN pnpm --filter web build
 
-# ---------- Runner (small, prod-only) ----------
-FROM node:20-alpine AS runner
-
-# Required runtime environment variables (must be passed at runtime)
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-# Validate required runtime args
-RUN test -n "$NEXT_PUBLIC_SUPABASE_URL" || (echo "Error: NEXT_PUBLIC_SUPABASE_URL is required" && exit 1)
-RUN test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || (echo "Error: NEXT_PUBLIC_SUPABASE_ANON_KEY is required" && exit 1)
-
-# Set environment variables for runtime
-ENV NODE_ENV=production \
-    PORT=3000 \
-    NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
+# ---- runner ----
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
-
-# Copy Next standalone output and statics
-# The standalone output includes a minimal Node server.js and required node_modules
-COPY --from=builder /tmp/build/apps/web/.next/standalone ./
-COPY --from=builder /tmp/build/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /tmp/build/apps/web/public ./apps/web/public
-
-# If you serve from a basePath, also set: ENV NEXT_PUBLIC_BASE_PATH=/your-base
+ENV NODE_ENV=production PORT=3000 NEXT_TELEMETRY_DISABLED=1
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
 EXPOSE 3000
-
-# For monorepos, Next puts server.js under apps/web in the standalone tree
 CMD ["node", "apps/web/server.js"]

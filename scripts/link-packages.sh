@@ -2,6 +2,8 @@
 
 # This script links the workspace packages for Docker builds
 # It should be run before the Next.js build process
+#
+# why do we even need this file?
 
 echo "Linking workspace packages for Docker build..."
 
