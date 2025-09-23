@@ -115,6 +115,38 @@ This will help validate:
 
 ---
 
+## 🔧 Admin Dashboard
+
+The platform includes a comprehensive admin dashboard for managing properties, transactions, and blockchain operations:
+
+### Property Management
+
+* View all properties with filtering by status (pending, active, sold)
+* Review and approve property submissions
+* Set lockup periods for property tokens
+* Create blockchain tokens for approved properties
+
+### Transaction Management
+
+* Review and approve transaction requests from users
+* Process purchases and sales of property shares
+* Manage ownership records and lockup periods
+
+### Blockchain Operations
+
+* Batch mint tokens to multiple wallets
+* Monitor token contract addresses and transactions
+* View blockchain transaction status
+
+### Rent Distribution
+
+* Process rent payments from tenants
+* Distribute rent to token holders based on ownership percentage
+
+Access the admin dashboard at `/app/admin` with an admin account. For more details, see the [Property Approval Workflow](docs/features/property-approval-workflow.md) documentation.
+
+---
+
 ## ⚠️ Internal Question: Why Blockchain?
 
 > "Why does this platform **need to be on a blockchain now**?"
