@@ -8,35 +8,14 @@
   "files": {
     "ignoreUnknown": false,
     "ignore": [
-      "*.d.ts",
-      "*.js",
-      "*.md",
-      "*API.ts",
-      "*mutations.ts",
-      "*queries.ts",
-      "*subscriptions.ts",
-      "public/",
-      "src/assets/",
       "**/coverage/**",
-      "**/amplify_outputs.json",
-      "**/API.ts",
-      "**/mutations.ts",
-      "**/queries.ts",
-      "**/subscriptions.ts",
-      "**/.aws-sam/**",
-      "**/.amplify/**",
-      "**/.mypy_cache/**",
-      "**/*.js",
       ".venv/*",
       "**/*.d.ts",
       "**/build/**",
       "*.md",
       "*.yaml",
       "*.py",
-      "*.sh",
-      "dist/**/*",
-      "*.map",
-      "ocpp-server/src/types/ocpp.ts"
+      "*.sh"
     ]
   },
   "linter": {
