@@ -107,37 +107,80 @@ Our Docker build process is designed to leverage caching effectively:
 
 ## Troubleshooting
 
-### Module Not Found Errors
+### Common Docker Build Issues
 
-If you encounter "Module not found" errors during the build, it might be due to workspace package linking issues. The build process should handle this automatically, but if you're still having issues:
+#### Module Not Found Errors
+
+If you encounter "Module not found" errors:
 
 1. Check that all package names in imports match the actual package names in `package.json` files
-2. Make sure the directory structure is created before copying files
+2. Verify that the package is listed in the dependencies section of the appropriate package.json
 
-### Directory Structure Errors
+#### Directory Structure Errors
 
-If you see errors like `cannot copy to non-directory`, this typically means there's a conflict between a file and a directory. Our Dockerfile is designed to avoid this by:
+If you see errors like `cannot copy to non-directory`:
 
-1. Creating the directory structure first with `mkdir -p`
-2. Installing dependencies before copying the source code
-3. Avoiding the use of the `link-packages.sh` script during the Docker build
+1. This is likely due to a conflict between a file and a directory in the Docker build process
+2. Our Dockerfile creates the directory structure first with `mkdir -p` to avoid this issue
+3. If the error persists, try running `docker system prune` to clean up Docker's cache
 
-### Dependency Installation Errors
+#### Stage Name Errors
 
-If you encounter errors during dependency installation:
+If you see errors about missing stage names (like `failed to resolve source metadata for docker.io/library/builder:latest`):
 
-1. Make sure your `pnpm-lock.yaml` file is up to date with your package.json files
-2. Check for incompatible dependencies between packages
-3. Try clearing your local pnpm cache: `pnpm store prune`
+1. Make sure all `COPY --from=X` statements reference a stage that exists in the Dockerfile
+2. Check that stage names are consistent throughout the Dockerfile
 
-### Build Performance
+### Environment Variables
 
-If Docker builds are slow:
+If you see errors about missing environment variables:
 
-1. Make sure you're leveraging Docker's layer caching
-2. Use the development build for faster iteration: `pnpm run docker:build:dev`
-3. Consider using Docker BuildKit: `export DOCKER_BUILDKIT=1` before building
+1. Ensure your `.env` file exists and contains all required variables
+2. Make sure the variables are passed correctly to Docker with `--build-arg` or through docker-compose
+
+### Performance Tips
+
+1. Use Docker's layer caching by organizing your Dockerfile from least to most frequently changing parts
+2. Consider using Docker BuildKit: `export DOCKER_BUILDKIT=1` before building
+3. For development, mount source code as volumes to avoid rebuilding the image for code changes
 
 ## CI/CD Integration
 
-For CI/CD pipelines, use the production build with the `--frozen-lockfile` flag to ensure consistent builds. Make sure to update and commit the lockfile whenever dependencies change.
+### GitHub Actions
+
+For CI/CD pipelines using GitHub Actions:
+
+```yaml
+name: Docker Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+```
+
+### Best Practices
+
+1. Always use specific versions for base images (e.g., `node:20.5.1-alpine` instead of `node:20-alpine`)
+2. Consider using multi-platform builds for broader compatibility
+3. Implement proper secret management for environment variables
+4. Add automated testing as part of the CI/CD pipeline

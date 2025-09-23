@@ -6,29 +6,37 @@ ENV PNPM_HOME="/pnpm" \
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && apk add --no-cache libc6-compat
 
-WORKDIR /app
-
 # ---------- Builder stage ----------
 FROM base AS builder
 
-# First copy only package.json files to leverage Docker caching
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json tsconfig.base.json ./
+# Create a temporary directory for the build
+WORKDIR /tmp/build
 
-# Create directory structure first
-RUN mkdir -p apps/web packages/ui packages/shared packages/supabase packages/blockchain
-
-# Copy package manifests
-COPY apps/web/package.json apps/web/
-COPY packages/ui/package.json packages/ui/
-COPY packages/shared/package.json packages/shared/
-COPY packages/supabase/package.json packages/supabase/
-COPY packages/blockchain/package.json packages/blockchain/
+# Copy package.json files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml turbo.json tsconfig.base.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/supabase/package.json ./packages/supabase/
+COPY packages/blockchain/package.json ./packages/blockchain/
 
 # Install dependencies
 RUN pnpm install
 
-# Now copy the rest of the source code
-COPY . .
+# Copy source files
+COPY apps/web/app ./apps/web/app/
+COPY apps/web/public ./apps/web/public/
+COPY apps/web/next.config.mjs ./apps/web/
+COPY apps/web/tsconfig.json ./apps/web/
+COPY packages/blockchain/src ./packages/blockchain/src/
+COPY packages/blockchain/tsconfig.json ./packages/blockchain/
+COPY packages/shared/src ./packages/shared/src/
+COPY packages/shared/tsconfig.json ./packages/shared/
+COPY packages/supabase/src ./packages/supabase/src/
+COPY packages/supabase/tsconfig.json ./packages/supabase/
+COPY packages/ui/src ./packages/ui/src/
+COPY packages/ui/tsconfig.json ./packages/ui/
+COPY scripts ./scripts/
 
 # Required build-time arguments with no defaults
 ARG NEXT_PUBLIC_SUPABASE_URL
