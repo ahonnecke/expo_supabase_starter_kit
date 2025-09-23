@@ -28,14 +28,24 @@ COPY apps/web/app ./apps/web/app/
 COPY apps/web/public ./apps/web/public/
 COPY apps/web/next.config.mjs ./apps/web/
 COPY apps/web/tsconfig.json ./apps/web/
+
+# Copy blockchain package
 COPY packages/blockchain/src ./packages/blockchain/src/
 COPY packages/blockchain/tsconfig.json ./packages/blockchain/
+
+# Copy shared package
 COPY packages/shared/src ./packages/shared/src/
-COPY packages/shared/tsconfig.json ./packages/shared/
+COPY packages/shared/index.ts ./packages/shared/
+
+# Copy supabase package
 COPY packages/supabase/src ./packages/supabase/src/
-COPY packages/supabase/tsconfig.json ./packages/supabase/
+COPY packages/supabase/client.ts ./packages/supabase/
+
+# Copy UI package
 COPY packages/ui/src ./packages/ui/src/
-COPY packages/ui/tsconfig.json ./packages/ui/
+COPY packages/ui/tamagui.config.ts ./packages/ui/
+
+# Copy scripts
 COPY scripts ./scripts/
 
 # Required build-time arguments with no defaults
@@ -78,9 +88,9 @@ WORKDIR /app
 
 # Copy Next standalone output and statics
 # The standalone output includes a minimal Node server.js and required node_modules
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /tmp/build/apps/web/.next/standalone ./
+COPY --from=builder /tmp/build/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /tmp/build/apps/web/public ./apps/web/public
 
 # If you serve from a basePath, also set: ENV NEXT_PUBLIC_BASE_PATH=/your-base
 EXPOSE 3000

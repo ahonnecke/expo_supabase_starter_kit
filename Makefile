@@ -77,6 +77,16 @@ docker.build:
 	@echo "Building and starting Docker containers..."
 	docker compose up --build web
 
+# Build Docker image without starting containers
+docker.build-only:
+	@echo "Building Docker image..."
+	docker build -t rentinity-web .
+
+# Build Docker image with no cache
+docker.rebuild:
+	@echo "Rebuilding Docker image from scratch..."
+	docker build --no-cache -t rentinity-web .
+
 # Stop Docker containers
 docker.down:
 	@echo "Stopping Docker containers..."
@@ -203,6 +213,10 @@ docker.clean:
 	docker compose down -v
 	docker compose -f docker-compose.dev.yaml down -v
 	docker system prune -f
+	@echo "Removing Docker images..."
+	docker rmi rentinity-web rentinity-hardhat-node -f 2>/dev/null || true
+	@echo "Removing Docker build cache..."
+	docker builder prune -f
 
 # ===== TESTING COMMANDS =====
 
@@ -361,10 +375,12 @@ help:
 	@echo "🐳 DOCKER COMMANDS:"
 	@echo "  make docker.up          - Start Docker containers"
 	@echo "  make docker.build       - Build and start containers"
+	@echo "  make docker.build-only  - Build Docker image without starting"
+	@echo "  make docker.rebuild     - Rebuild Docker image from scratch"
 	@echo "  make docker.dev         - Start dev environment with blockchain"
 	@echo "  make docker.down        - Stop Docker containers"
 	@echo "  make docker.logs        - View Docker logs"
-	@echo "  make docker.clean       - Clean containers and volumes"
+	@echo "  make docker.clean       - Clean containers, volumes, and images"
 	@echo ""
 	@echo "💻 DEVELOPMENT COMMANDS:"
 	@echo "  make dev.install        - Install all dependencies"
