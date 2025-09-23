@@ -8,7 +8,9 @@ RUN corepack enable && apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# ---------- Dependencies layer ----------
+# ---------- Builder stage ----------
+FROM base AS builder
+
 # First copy only package.json files to leverage Docker caching
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json tsconfig.base.json ./
 
@@ -25,7 +27,6 @@ COPY packages/blockchain/package.json packages/blockchain/
 # Install dependencies
 RUN pnpm install
 
-# ---------- Builder ----------
 # Now copy the rest of the source code
 COPY . .
 

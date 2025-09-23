@@ -18,11 +18,9 @@
     "gen:types": "supabase gen types typescript --schema public > packages/shared/src/db.types.ts",
     "gen:sample-data": "tsx scripts/generate-sample-data.ts",
     "link:blockchain": "mkdir -p apps/web/node_modules/@rentinity/blockchain/dist && cp -r packages/blockchain/dist/* apps/web/node_modules/@rentinity/blockchain/dist/ && cp packages/blockchain/package.json apps/web/node_modules/@rentinity/blockchain/",
-    "link:packages": "./scripts/link-packages.sh",
-    "update-lockfile": "./scripts/update-lockfile.sh",
-    "docker:build": "./scripts/docker-build.sh",
-    "docker:build:dev": "./scripts/docker-build.sh --multistage --target dev-builder --tag rentinity-web-dev",
-    "docker:build:prod": "./scripts/docker-build.sh --multistage --target runner --tag rentinity-web-prod"
+    "docker:build": "docker build -t rentinity-web .",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.55.0",

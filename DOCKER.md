@@ -10,11 +10,11 @@ This document provides instructions for building and running the Rentinity appli
 
 ## Docker Build Strategy
 
-Our Docker build process uses a layered approach to optimize build times:
+Our Docker build process uses a simple multi-stage approach to optimize build times:
 
-1. **Dependencies Layer**: First copies only package.json files and installs dependencies
-2. **Source Layer**: Then copies the rest of the source code
-3. **Build Layer**: Builds packages and the web application
+1. **Base Stage**: Sets up the Node.js environment with pnpm
+2. **Builder Stage**: Installs dependencies and builds the application
+3. **Runner Stage**: Creates a minimal production image
 
 This approach leverages Docker's layer caching to avoid reinstalling dependencies when only source code changes.
 
@@ -31,32 +31,24 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### Using NPM Scripts (Recommended)
 
-We've created several convenience scripts to make Docker builds easier:
+We've created convenience scripts to make Docker builds easier:
 
 ```bash
-# Standard build (uses Dockerfile)
+# Build the Docker image
 pnpm run docker:build
 
-# Development build (uses Dockerfile.multistage with dev-builder target)
-pnpm run docker:build:dev
+# Start the Docker containers
+pnpm run docker:up
 
-# Production build (uses Dockerfile.multistage with runner target)
-pnpm run docker:build:prod
-
-# Build with automatic lockfile update if needed
-pnpm run docker:build:update
+# Stop the Docker containers
+pnpm run docker:down
 ```
-
-These scripts will automatically:
-1. Check if your .env file exists and has the required variables
-2. Verify if the lockfile is up to date
-3. Build the Docker image with the appropriate configuration
 
 ### Manual Docker Commands
 
-#### Standard Build
+#### Building
 
-To build the application using the standard Dockerfile:
+To build the application manually:
 
 ```bash
 docker build -t rentinity-web \
@@ -65,35 +57,19 @@ docker build -t rentinity-web \
   .
 ```
 
-#### Multi-stage Build
+#### Running with Docker Compose
 
-For more flexibility, you can use the multi-stage Dockerfile:
-
-```bash
-# Development build
-docker build -t rentinity-web-dev \
-  --target dev-builder \
-  -f Dockerfile.multistage \
-  .
-
-# Production build
-docker build -t rentinity-web-prod \
-  --build-arg NEXT_PUBLIC_SUPABASE_URL=your_supabase_url \
-  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key \
-  -f Dockerfile.multistage \
-  .
-```
-
-### Using Docker Compose
-
-For convenience, you can use Docker Compose to build and run the application:
+To run the application with Docker Compose:
 
 ```bash
-# Development build
-docker-compose -f docker-compose.build.yaml up web-dev
+# Build and start containers
+docker compose up -d
 
-# Production build
-docker-compose -f docker-compose.build.yaml up web-prod
+# View logs
+docker compose logs -f
+
+# Stop containers
+docker compose down
 ```
 
 ## Updating Dependencies
