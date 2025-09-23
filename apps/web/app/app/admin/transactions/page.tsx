@@ -408,6 +408,7 @@ function AdminTransactionsContent() {
                   {request.status === 'pending' && (
                     <>
                       <button
+                        type="button"
                         onClick={() => handleApprove(request)}
                         style={{
                           ...styles.button,
@@ -421,6 +422,7 @@ function AdminTransactionsContent() {
                           : 'Approve'}
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleReject(request)}
                         style={{
                           ...styles.button,

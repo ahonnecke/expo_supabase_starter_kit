@@ -503,6 +503,7 @@ function PropertyDetailContent({ id }: { id: string }) {
               )}
 
               <button
+                type="button"
                 onClick={handleInvest}
                 style={{
                   ...styles.button,
